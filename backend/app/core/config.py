@@ -1,0 +1,39 @@
+import os
+from typing import Optional
+from pydantic_settings import BaseSettings
+
+class Settings(BaseSettings):
+    # Database - Updated for Supabase Transaction Pooler
+    DATABASE_URL: str = os.getenv(
+        "DATABASE_URL", 
+        "postgresql://postgres.kziekhazhvszdfgrekre:YOUR-PASSWORD@aws-1-eu-north-1.pooler.supabase.com:6543/postgres"
+    )
+    
+    # Security
+    SECRET_KEY: str = os.getenv("SECRET_KEY", "your-secret-key-here-change-in-production")
+    ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    
+    # API
+    API_V1_STR: str = "/api/v1"
+    PROJECT_NAME: str = "Real Estate Platform"
+    
+    # CORS
+    BACKEND_CORS_ORIGINS: list = ["http://localhost:3000", "http://localhost:5173"]
+    ALLOWED_ORIGINS: Optional[str] = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173,http://localhost:3000")
+    
+    # Supabase Configuration
+    SUPABASE_URL: str = os.getenv("SUPABASE_URL", "https://kziekhazhvszdfgrekre.supabase.co")
+    SUPABASE_ANON_KEY: Optional[str] = os.getenv("SUPABASE_ANON_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt6aWVraGF6aHZzemRmZ3Jla3JlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUxNTE4ODAsImV4cCI6MjA3MDcyNzg4MH0.FrBwK9-3S06kZcPGNsQem6rmYh4JrMGkKvW0brlP6bs")
+    SUPABASE_SERVICE_ROLE_KEY: Optional[str] = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt6aWVraGF6aHZzemRmZ3Jla3JlIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NTE1MTg4MCwiZXhwIjoyMDcwNzI3ODgwfQ.5DqX-MtaxVXP-0mNhAEBMYm8IY48EIx-fhXx09RDqp8")
+    
+    # Pooler-specific notes
+    # Note: This pooler does not support PREPARE statements
+    # Ideal for stateless applications like serverless functions
+    
+    class Config:
+        case_sensitive = True
+        env_file = ".env"
+        extra = "ignore"  # Ignore extra environment variables
+
+settings = Settings()
