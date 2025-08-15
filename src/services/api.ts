@@ -3,6 +3,14 @@ import { Plot, User, Order, Location } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
 
+// Enhanced error handling
+class ApiError extends Error {
+  constructor(public status: number, message: string, public data?: any) {
+    super(message);
+    this.name = 'ApiError';
+  }
+}
+
 // Simple fetch wrapper with auth headers
 const apiRequest = async (endpoint: string, options: RequestInit = {}) => {
   const token = localStorage.getItem('access_token');
@@ -12,17 +20,30 @@ const apiRequest = async (endpoint: string, options: RequestInit = {}) => {
     ...options.headers,
   };
 
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    ...options,
-    headers,
-  });
+  try {
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      ...options,
+      headers,
+    });
 
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({ detail: 'Request failed' }));
-    throw new Error(errorData.detail || `Request failed with status ${response.status}`);
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ detail: 'Request failed' }));
+      throw new ApiError(response.status, errorData.detail || `Request failed with status ${response.status}`, errorData);
+    }
+
+    // Handle empty responses
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      return response.json();
+    }
+    return response.text();
+  } catch (error) {
+    if (error instanceof ApiError) {
+      throw error;
+    }
+    // Network or other errors
+    throw new ApiError(0, `Network error: ${error.message}`, error);
   }
-
-  return response.json();
 };
 
 // Simplified API service that directly calls FastAPI endpoints

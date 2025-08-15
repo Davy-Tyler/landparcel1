@@ -244,20 +244,22 @@ export const Header: React.FC = () => {
 
               {/* Language Selector Mobile */}
               <div className="px-3 py-2">
-                <select
-                  value={language}
-                  onChange={(e) => setLanguage(e.target.value as 'en' | 'sw')}
-                  className="w-full text-base bg-transparent border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="en">English</option>
-                  <option value="sw">Swahili</option>
-                </select>
-              </div>
-
-              {user ? (
-                <div className="border-t border-gray-200 pt-2 mt-2">
-                  <div className="px-3 py-2 text-base font-medium text-gray-900">
-                    {user.first_name} {user.last_name}
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      <button 
+                        onClick={() => setShowUploadModal(true)}
+                        className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors flex items-center justify-center"
+                      >
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add Plot
+                      </button>
+                      <button 
+                        onClick={() => setShowShapefileModal(true)}
+                        className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors flex items-center justify-center"
+                      >
+                        <Plus className="w-4 h-4 mr-2" />
+                        Upload Shapefile
+                      </button>
+                    </div>
                   </div>
                   <button
                     onClick={() => {

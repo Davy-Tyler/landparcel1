@@ -26,12 +26,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Check if user is already logged in by checking for token and validating it
     const checkUser = async () => {
       try {
+        const token = localStorage.getItem('access_token');
+        if (!token) {
+          if (mounted) {
+            setLoading(false);
+          }
+          return;
+        }
+        
         const userData = await apiService.getCurrentUser();
         if (mounted && userData) {
           setUser(userData);
         }
       } catch (error) {
         console.error('Error checking user session:', error);
+        // Clear invalid token
+        localStorage.removeItem('access_token');
       } finally {
         if (mounted) {
           setLoading(false);

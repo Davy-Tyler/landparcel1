@@ -131,7 +131,7 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({ onFilterChange, locations
             onChange={(e) => handleFilterChange('region', e.target.value || undefined)}
           >
             <option value="">All Regions</option>
-            {Array.from(new Set(locations.map(l => l.hierarchy.region))).map(region => (
+            {Array.from(new Set(locations.map(l => l.hierarchy?.region).filter(Boolean))).map(region => (
               <option key={region} value={region}>{region}</option>
             ))}
           </select>
@@ -150,8 +150,8 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({ onFilterChange, locations
             <option value="">All Districts</option>
             {Array.from(new Set(
               locations
-                .filter(l => !filters.region || l.hierarchy.region === filters.region)
-                .flatMap(l => Object.keys(l.hierarchy.districts))
+                .filter(l => !filters.region || l.hierarchy?.region === filters.region)
+                .flatMap(l => Object.keys(l.hierarchy?.districts || {}))
             )).map(district => (
               <option key={district} value={district}>{district}</option>
             ))}
@@ -172,13 +172,13 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({ onFilterChange, locations
             {Array.from(new Set(
               locations
                 .filter(l => 
-                  (!filters.region || l.hierarchy.region === filters.region) &&
-                  (!filters.district || Object.keys(l.hierarchy.districts).includes(filters.district))
+                  (!filters.region || l.hierarchy?.region === filters.region) &&
+                  (!filters.district || Object.keys(l.hierarchy?.districts || {}).includes(filters.district))
                 )
                 .flatMap(l => 
-                  Object.entries(l.hierarchy.districts)
+                  Object.entries(l.hierarchy?.districts || {})
                     .filter(([district]) => !filters.district || district === filters.district)
-                    .flatMap(([, data]) => data.councils)
+                    .flatMap(([, data]) => data?.councils || [])
                 )
             )).map(council => (
               <option key={council} value={council}>{council}</option>

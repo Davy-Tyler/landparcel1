@@ -73,13 +73,14 @@ def search_plots(db: Session, search_params: PlotSearch, skip: int = 0, limit: i
         query = query.join(Location).filter(Location.hierarchy['region'].astext == search_params.region)
     
     if search_params.district:
-        query = query.join(Location).filter(Location.hierarchy['districts'].op('?')(search_params.district))
+        query = query.join(Location).filter(Location.hierarchy['districts'].has_key(search_params.district))
     
     if search_params.council:
-        # Search for council in any district's councils array
+        # Search for council in districts councils arrays
+        from sqlalchemy import text
         query = query.join(Location).filter(
-            Location.hierarchy['districts'].op('@>')(f'{{"*": {{"councils": ["{search_params.council}"]}}}}')
-        )
+            text("EXISTS (SELECT 1 FROM jsonb_each(hierarchy->'districts') AS d(key, value) WHERE value->'councils' ? :council)")
+        ).params(council=search_params.council)
     
     if search_params.usage_type:
         query = query.filter(Plot.usage_type == search_params.usage_type)

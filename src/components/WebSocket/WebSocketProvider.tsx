@@ -167,16 +167,14 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
 
   // Connect when user is authenticated
   useEffect(() => {
-    if (user) {
-      connect();
-    } else {
-      disconnect();
-    }
+    // Always try to connect for real-time updates
+    // WebSocket can work without authentication for public data
+    connect();
 
     return () => {
       disconnect();
     };
-  }, [user]);
+  }, []); // Remove user dependency to allow public connections
 
   const value: WebSocketContextType = {
     isConnected,
