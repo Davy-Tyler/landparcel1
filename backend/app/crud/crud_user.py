@@ -18,7 +18,12 @@ def get_users(db: Session, skip: int = 0, limit: int = 100) -> List[User]:
 
 def create_user(db: Session, user: UserCreate) -> User:
     """Create new user."""
-    hashed_password = get_password_hash(user.password)
+    # Handle placeholder password for Supabase users
+    if user.password == "supabase-auth":
+        hashed_password = "supabase-auth"
+    else:
+        hashed_password = get_password_hash(user.password)
+    
     db_user = User(
         first_name=user.first_name,
         last_name=user.last_name,

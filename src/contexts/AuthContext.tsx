@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { apiService } from '../services/api';
+import { supabaseApiService } from '../services/supabaseApi';
 import { User, AuthContextType, RegisterData } from '../types';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -26,17 +26,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Check if user is already logged in by checking for token and validating it
     const checkUser = async () => {
       try {
-        const token = localStorage.getItem('access_token');
-        if (token) {
-          const userData = await apiService.getCurrentUser();
-          if (mounted && userData) {
-            setUser(userData);
-          }
+        const userData = await supabaseApiService.getCurrentUser();
+        if (mounted && userData) {
+          setUser(userData);
         }
       } catch (error) {
         console.error('Error checking user session:', error);
-        // Invalid token, remove it
-        localStorage.removeItem('access_token');
       } finally {
         if (mounted) {
           setLoading(false);
@@ -54,11 +49,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const login = async (email: string, password: string): Promise<boolean> => {
     setLoading(true);
     try {
-      const result = await apiService.login(email, password);
-      
-      if (result.session && result.user) {
-        console.log('Login successful for:', result.user.email);
-        setUser(result.user);
+      await supabaseApiService.login(email, password);
+      const userData = await supabaseApiService.getCurrentUser();
+      if (userData) {
+        console.log('Login successful for:', userData.email);
+        setUser(userData);
         return true;
       }
       return false;
@@ -84,20 +79,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         throw new Error('Password must be at least 6 characters long.');
       }
 
-      const result = await apiService.register(userData);
+      await supabaseApiService.register(userData);
+      // Fetch / create profile row
+      const user = await supabaseApiService.getCurrentUser();
       
-      if (result.user) {
-        console.log('Registration successful for:', result.user.email);
-        
-        if (result.session) {
-          console.log('User has session after registration');
-          setUser(result.user);
-          return true;
-        } else {
-          // User created but auto-login failed
-          console.log('Registration successful, but auto-login failed');
-          return false;
-        }
+      if (user) {
+        console.log('Registration successful for:', user.email);
+        setUser(user);
+        return true;
       }
       
       return false;
@@ -112,7 +101,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const logout = async () => {
     try {
-      apiService.logout();
+      await supabaseApiService.logout();
       setUser(null);
     } catch (error) {
       console.error('Logout error:', error);

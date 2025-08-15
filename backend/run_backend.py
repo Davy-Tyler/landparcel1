@@ -1,9 +1,9 @@
 """Convenience launcher for the FastAPI backend with diagnostics.
 
 Run from repo root:
-    python -m backend.run_backend
-Or:
     python backend/run_backend.py
+Or from backend directory:
+    python run_backend.py
 
 Environment variables:
   DATABASE_URL         Postgres connection string (Supabase DB)
@@ -13,8 +13,14 @@ Environment variables:
 
 from __future__ import annotations
 import os
+import sys
 import logging
 import uvicorn
+
+# Ensure we can import from the backend directory
+backend_dir = os.path.dirname(os.path.abspath(__file__))
+if backend_dir not in sys.path:
+    sys.path.insert(0, backend_dir)
 
 LOG_LEVEL = os.getenv("BACKEND_LOG_LEVEL", "INFO").upper()
 logging.basicConfig(
@@ -39,6 +45,9 @@ def main():
         logger.info("Using DATABASE_URL=%s", safe)
     else:
         logger.warning("DATABASE_URL not set; DB endpoints will fail")
+
+    # Change working directory to backend for uvicorn to find the app module
+    os.chdir(backend_dir)
 
     uvicorn.run(
         "app.main:app",
