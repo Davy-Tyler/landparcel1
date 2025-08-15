@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { supabaseApiService } from '../services/supabaseApi';
+import { apiService } from '../services/api';
 import { User, AuthContextType, RegisterData } from '../types';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -26,7 +26,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Check if user is already logged in by checking for token and validating it
     const checkUser = async () => {
       try {
-        const userData = await supabaseApiService.getCurrentUser();
+        const userData = await apiService.getCurrentUser();
         if (mounted && userData) {
           setUser(userData);
         }
@@ -49,8 +49,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const login = async (email: string, password: string): Promise<boolean> => {
     setLoading(true);
     try {
-      await supabaseApiService.login(email, password);
-      const userData = await supabaseApiService.getCurrentUser();
+      const loginResult = await apiService.login(email, password);
+      const userData = loginResult.user;
       if (userData) {
         console.log('Login successful for:', userData.email);
         setUser(userData);
@@ -79,9 +79,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         throw new Error('Password must be at least 6 characters long.');
       }
 
-      await supabaseApiService.register(userData);
-      // Fetch / create profile row
-      const user = await supabaseApiService.getCurrentUser();
+      const registerResult = await apiService.register(userData);
+      const user = registerResult.user;
       
       if (user) {
         console.log('Registration successful for:', user.email);
@@ -101,7 +100,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const logout = async () => {
     try {
-      await supabaseApiService.logout();
+      apiService.logout();
       setUser(null);
     } catch (error) {
       console.error('Logout error:', error);
