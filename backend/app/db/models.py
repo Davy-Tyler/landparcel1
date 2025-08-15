@@ -30,7 +30,7 @@ class User(Base):
     email = Column(Text, unique=True, nullable=False, index=True)
     phone_number = Column(Text, unique=True)
     hashed_password = Column(Text, nullable=False)
-    role = Column(Enum(UserRole), default=UserRole.USER, nullable=False)
+    role = Column(Enum(UserRole, values_callable=lambda obj: [e.value for e in obj]), default=UserRole.USER, nullable=False)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     
@@ -60,7 +60,7 @@ class Plot(Base):
     price = Column(Numeric(12, 2), nullable=False)
     image_urls = Column(ARRAY(Text))
     usage_type = Column(Text, default="Residential")
-    status = Column(Enum(PlotStatus), default=PlotStatus.AVAILABLE, nullable=False)
+    status = Column(Enum(PlotStatus, values_callable=lambda obj: [e.value for e in obj]), default=PlotStatus.AVAILABLE, nullable=False)
     location_id = Column(UUID(as_uuid=True), ForeignKey("locations.id"))  # Changed from council_id
     geom = Column(Geometry("POLYGON", srid=4326))
     uploaded_by_id = Column(UUID(as_uuid=True), ForeignKey("users.id"))

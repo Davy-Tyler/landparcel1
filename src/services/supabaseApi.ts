@@ -1,6 +1,9 @@
 import { supabase } from '../lib/supabase';
 import { Plot, User, Order, Location } from '../types';
 
+// Placeholder for password field in custom users table (supabase manages auth separately)
+const HASH_PLACEHOLDER = 'supabase-auth';
+
 class SupabaseApiService {
   // Auth methods
   async login(email: string, password: string) {
@@ -32,17 +35,38 @@ class SupabaseApiService {
 
   async getCurrentUser(): Promise<User | null> {
     const { data: { user } } = await supabase.auth.getUser();
-    
     if (!user) return null;
 
-    const { data: userData, error } = await supabase
+    // Try to fetch existing profile row
+    let { data: userData, error } = await supabase
       .from('users')
       .select('*')
       .eq('email', user.email)
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
-    return userData;
+
+    // Self-heal: if no row, create one (hashed_password required by schema)
+    if (!userData) {
+      const insertPayload: any = {
+        email: user.email,
+        first_name: user.user_metadata?.first_name || null,
+        last_name: user.user_metadata?.last_name || null,
+        phone_number: user.user_metadata?.phone_number || null,
+        hashed_password: HASH_PLACEHOLDER,
+        role: 'user',
+        is_active: true
+      };
+      const { data: inserted, error: insertError } = await supabase
+        .from('users')
+        .insert(insertPayload)
+        .select('*')
+        .single();
+      if (insertError) throw insertError;
+      userData = inserted as User;
+    }
+
+    return userData as User;
   }
 
   async logout() {

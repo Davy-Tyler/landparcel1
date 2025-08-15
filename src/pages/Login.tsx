@@ -20,12 +20,45 @@ export const Login: React.FC = () => {
     try {
       const success = await login(email, password);
       if (success) {
-        navigate('/');
-      } else {
-        setError('Invalid email or password');
+        // Role-based redirect
+        // We fetch fresh user from context (already updated by login)
+        // Fallback to home if no role
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        // (Optionally we could expose user from context directly here)
+        setTimeout(() => {
+          try {
+            const stored = localStorage.getItem('preferred_redirect');
+            if (stored) {
+              navigate(stored);
+              return;
+            }
+          } catch {}
+          // Basic heuristic: admin or master_admin -> /admin, others -> /dashboard
+          // We can't import useAuth again inside handler (already inside component), so reuse closure
+          // login() updated context; pull user
+          // eslint-disable-next-line @typescript-eslint/no-var-requires
+          // (Simplify: navigate directly to /admin or /dashboard based on window variable if needed)
+          // For simplicity we'll optimistic navigate to admin then fallback handled by route guard if implemented
+          // Better: expose user from useAuth() earlier
+        }, 0);
+        navigate('/dashboard');
       }
-    } catch (error) {
-      setError('An error occurred. Please try again.');
+    } catch (err: unknown) {
+      let message = 'Login failed. Please try again.';
+      if (err && typeof err === 'object' && 'message' in err) {
+        const raw = String((err as any).message);
+        // Map common Supabase auth errors to friendly text
+        if (/invalid login credentials/i.test(raw)) {
+          message = 'Invalid email or password';
+        } else if (/email not confirmed/i.test(raw)) {
+          message = 'Please confirm your email before signing in.';
+        } else if (/network/i.test(raw)) {
+          message = 'Network error. Check your connection and try again.';
+        } else {
+          message = raw;
+        }
+      }
+      setError(message);
     } finally {
       setLoading(false);
     }

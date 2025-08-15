@@ -39,18 +39,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
+    setLoading(true);
     try {
-      setLoading(true);
       await supabaseApiService.login(email, password);
       const userData = await supabaseApiService.getCurrentUser();
-      if (userData) {
-        setUser(userData);
-      }
-
+      if (userData) setUser(userData);
       return true;
     } catch (error) {
+      // Let the consumer decide how to surface the error
       console.error('Login error:', error);
-      return false;
+      throw error;
     } finally {
       setLoading(false);
     }
@@ -65,9 +63,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         console.error('Registration error: Invalid email format');
         return false; // Or handle the error as appropriate
       }
-      await supabaseApiService.register(userData);
-
-      return true;
+  await supabaseApiService.register(userData);
+  // Fetch / create profile row
+  await supabaseApiService.getCurrentUser();
+  return true;
     } catch (error) {
       console.error('Registration error:', error);
       return false;

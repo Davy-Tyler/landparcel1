@@ -64,7 +64,13 @@ def search_plots(db: Session, search_params: PlotSearch, skip: int = 0, limit: i
         query = query.filter(Plot.usage_type == search_params.usage_type)
     
     if search_params.status:
-        query = query.filter(Plot.status == search_params.status)
+        # Convert string status to PlotStatus enum for proper comparison
+        try:
+            status_enum = PlotStatus(search_params.status)
+            query = query.filter(Plot.status == status_enum)
+        except ValueError:
+            # If invalid status provided, filter will return no results
+            query = query.filter(Plot.status == search_params.status)
     
     return query.offset(skip).limit(limit).all()
 

@@ -20,7 +20,7 @@ def create_admin_user():
     try:
         # Check if master admin already exists
         existing_admin = db.query(User).filter(
-            User.role == UserRole.MASTER_ADMIN
+            User.role == "master_admin"
         ).first()
         
         if existing_admin:
@@ -33,7 +33,7 @@ def create_admin_user():
             last_name="Admin",
             email="admin@realestate.com",
             hashed_password=get_password_hash("admin123"),
-            role=UserRole.MASTER_ADMIN,
+            role="master_admin",
             is_active=True
         )
         

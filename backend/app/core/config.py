@@ -6,7 +6,7 @@ class Settings(BaseSettings):
     # Database - Updated for Supabase Transaction Pooler
     DATABASE_URL: str = os.getenv(
         "DATABASE_URL", 
-        "postgresql://postgres.kziekhazhvszdfgrekre:YOUR-PASSWORD@aws-1-eu-north-1.pooler.supabase.com:6543/postgres"
+        "postgresql://postgres.kziekhazhvszdfgrekre:Landhub101@aws-1-eu-north-1.pooler.supabase.com:6543/postgres"
     )
     
     # Security
