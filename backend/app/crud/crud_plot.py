@@ -4,6 +4,27 @@ from sqlalchemy import and_, or_
 from app.db.models import Plot, Location, PlotStatus
 from app.schemas.plot import PlotCreate, PlotUpdate, PlotSearch
 
+def create_plot(db: Session, plot: PlotCreate, user_id: str, geometry: dict = None) -> Plot:
+    """Create new plot with optional geometry."""
+    plot_data = plot.dict()
+    
+    # Handle geometry if provided
+    if geometry:
+        from sqlalchemy import text
+        # Convert GeoJSON to PostGIS geometry
+        geom_query = text("SELECT ST_GeomFromGeoJSON(:geom_json)")
+        result = db.execute(geom_query, {'geom_json': str(geometry)})
+        plot_data['geom'] = result.scalar()
+    
+    db_plot = Plot(
+        **plot_data,
+        uploaded_by_id=user_id
+    )
+    db.add(db_plot)
+    db.commit()
+    db.refresh(db_plot)
+    return db_plot
+
 def get_plot(db: Session, plot_id: str) -> Optional[Plot]:
     """Get plot by ID with location details."""
     return db.query(Plot).options(

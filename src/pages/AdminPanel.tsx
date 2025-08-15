@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Layout } from '../components/Layout/Layout';
 import { PlotUploadModal } from '../components/Admin/PlotUploadModal';
+import { ShapefileUploadModal } from '../components/Admin/ShapefileUploadModal';
 import { useAuth } from '../contexts/AuthContext';
 import { apiService } from '../services/api';
 import { Plot, Order, User } from '../types';
@@ -15,6 +16,7 @@ export const AdminPanel: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [showShapefileModal, setShowShapefileModal] = useState(false);
 
   useEffect(() => {
     if (user && (user.role === 'admin' || user.role === 'master_admin')) {
@@ -111,6 +113,16 @@ export const AdminPanel: React.FC = () => {
             setShowUploadModal(false);
           }}
         />
+
+        {/* Shapefile Upload Modal */}
+        <ShapefileUploadModal
+          isOpen={showShapefileModal}
+          onClose={() => setShowShapefileModal(false)}
+          onSuccess={() => {
+            fetchData();
+            setShowShapefileModal(false);
+          }}
+        />
       </Layout>
     );
   }
@@ -198,6 +210,13 @@ export const AdminPanel: React.FC = () => {
                   >
                     <Plus className="w-4 h-4 mr-2" />
                     Add Plot
+                  </button>
+                  <button 
+                    onClick={() => setShowShapefileModal(true)}
+                    className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors flex items-center justify-center"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Upload Shapefile
                   </button>
                 </div>
               </div>

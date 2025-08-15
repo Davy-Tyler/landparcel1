@@ -3,7 +3,7 @@ import { Layout } from '../components/Layout/Layout';
 import { PlotGrid } from '../components/Plots/PlotGrid';
 import { PlotDetailsModal } from '../components/Plots/PlotDetailsModal';
 import SearchFilters, { FilterOptions } from '../components/Plots/SearchFilters';
-import { MapView } from '../components/Map/MapView';
+import { AdvancedMapView } from '../components/Map/AdvancedMapView';
 import { Plot } from '../types';
 import { apiService } from '../services/api';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -116,9 +116,11 @@ export const Home: React.FC = () => {
                 onViewDetails={handleViewDetails}
               />
             ) : (
-              <MapView
+              <AdvancedMapView
                 plots={plots}
                 onPlotClick={handlePlotClick}
+                enableDrawing={true}
+                enableSearch={true}
               />
             )}
           </div>

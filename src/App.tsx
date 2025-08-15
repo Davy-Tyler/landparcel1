@@ -4,6 +4,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import { CartProvider } from './contexts/CartContext';
 import { LanguageProvider } from './contexts/LanguageContext';
 import { NotificationProvider } from './components/Notifications/NotificationService';
+import { WebSocketProvider } from './components/WebSocket/WebSocketProvider';
 import { useCartTimer } from './hooks/useCartTimer';
 import { Home } from './pages/Home';
 import { Login } from './pages/Login';
@@ -32,15 +33,17 @@ const AppContent: React.FC = () => {
 function App() {
   return (
     <NotificationProvider>
-      <LanguageProvider>
-        <AuthProvider>
-          <CartProvider>
-            <Router>
-              <AppContent />
-            </Router>
-          </CartProvider>
-        </AuthProvider>
-      </LanguageProvider>
+      <WebSocketProvider>
+        <LanguageProvider>
+          <AuthProvider>
+            <CartProvider>
+              <Router>
+                <AppContent />
+              </Router>
+            </CartProvider>
+          </AuthProvider>
+        </LanguageProvider>
+      </WebSocketProvider>
     </NotificationProvider>
   );
 }

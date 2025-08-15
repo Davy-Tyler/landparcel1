@@ -9,9 +9,11 @@ from sqlalchemy import text, inspect
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.api.endpoints import users, plots, orders, auth
+from app.api.endpoints import geo, websocket
 from app.core.config import settings
 from app.db.session import engine
 from app.db.models import Base
+from app.core.redis import redis_client
 
 logger = logging.getLogger("app.main")
 
@@ -46,6 +48,8 @@ app.include_router(auth.router, prefix="/api/auth", tags=["authentication"])
 app.include_router(users.router, prefix="/api/users", tags=["users"])
 app.include_router(plots.router, prefix="/api/plots", tags=["plots"])
 app.include_router(orders.router, prefix="/api/orders", tags=["orders"])
+app.include_router(geo.router, prefix="/api/geo", tags=["geospatial"])
+app.include_router(websocket.router, prefix="/api", tags=["websocket"])
 
 @app.get("/")
 async def root():
@@ -56,6 +60,16 @@ async def health_check():
     return {"status": "healthy"}
 
 @app.on_event("startup")
+async def startup_event():
+    """Initialize services on startup"""
+    await redis_client.connect()
+    await startup_diagnostics()
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """Cleanup on shutdown"""
+    await redis_client.disconnect()
+
 async def startup_diagnostics():
     """Log DB connectivity & schema presence (non-intrusive)."""
     if os.getenv("SKIP_DB_CHECK") == "1":

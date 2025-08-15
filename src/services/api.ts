@@ -171,6 +171,57 @@ export const apiService = {
     return apiRequest(`/plots/${plotId}/unlock`, { method: 'POST' });
   },
 
+  // Geospatial endpoints
+  async uploadShapefile(formData: FormData) {
+    const token = localStorage.getItem('access_token');
+    const response = await fetch(`${API_BASE_URL}/geo/shapefile/upload`, {
+      method: 'POST',
+      headers: {
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ detail: 'Upload failed' }));
+      throw new Error(errorData.detail || 'Shapefile upload failed');
+    }
+
+    return response.json();
+  },
+
+  async getShapefileStatus(taskId: string) {
+    return apiRequest(`/geo/shapefile/status/${taskId}`);
+  },
+
+  async getPlotsInArea(polygonCoords: number[][]) {
+    return apiRequest('/geo/plots-in-area', {
+      method: 'POST',
+      body: JSON.stringify(polygonCoords),
+    });
+  },
+
+  async getPlotsNearPoint(lat: number, lng: number, radiusKm: number = 5) {
+    const params = new URLSearchParams({
+      lat: lat.toString(),
+      lng: lng.toString(),
+      radius_km: radiusKm.toString(),
+    });
+    return apiRequest(`/geo/plots-near-point?${params}`);
+  },
+
+  async getGeoStatistics(locationId?: string) {
+    const params = locationId ? `?location_id=${locationId}` : '';
+    return apiRequest(`/geo/statistics${params}`);
+  },
+
+  async validateGeometry(geometry: any) {
+    return apiRequest('/geo/validate-geometry', {
+      method: 'POST',
+      body: JSON.stringify(geometry),
+    });
+  },
+
   logout() {
     localStorage.removeItem('access_token');
   }
