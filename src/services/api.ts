@@ -1,4 +1,4 @@
-import { Plot, User, Order } from '../types';
+import { Plot, User, Order, Location } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
 
@@ -23,12 +23,20 @@ class ApiService {
     });
 
     if (!response.ok) {
-      throw new Error('Login failed');
+      const errorData = await response.json().catch(() => ({ detail: 'Login failed' }));
+      if (response.status === 401) {
+        throw new Error('Invalid email or password. Please check your credentials and try again.');
+      }
+      throw new Error(errorData.detail || 'Login failed');
     }
 
     const data = await response.json();
     localStorage.setItem('access_token', data.access_token);
-    return data;
+    // Return data in the format expected by existing code
+    return {
+      user: await this.getCurrentUser(),
+      session: { access_token: data.access_token }
+    };
   }
 
   async register(userData: any) {
@@ -39,10 +47,28 @@ class ApiService {
     });
 
     if (!response.ok) {
-      throw new Error('Registration failed');
+      const errorData = await response.json().catch(() => ({ detail: 'Registration failed' }));
+      if (response.status === 400 && errorData.detail?.includes('Email already registered')) {
+        throw new Error('Email already registered');
+      }
+      throw new Error(errorData.detail || 'Registration failed');
     }
 
-    return response.json();
+    const user = await response.json();
+    // Auto-login after successful registration
+    try {
+      const loginData = await this.login(userData.email, userData.password);
+      return {
+        user: loginData.user,
+        session: loginData.session
+      };
+    } catch (loginError) {
+      // If auto-login fails, return the created user
+      return {
+        user,
+        session: null
+      };
+    }
   }
 
   async getCurrentUser(): Promise<User> {
@@ -102,6 +128,20 @@ class ApiService {
     return response.json();
   }
 
+  async updatePlot(id: string, plotData: any): Promise<Plot> {
+    const response = await fetch(`${API_BASE_URL}/plots/${id}`, {
+      method: 'PUT',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(plotData),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to update plot');
+    }
+
+    return response.json();
+  }
+
   // Order endpoints
   async getOrders(): Promise<Order[]> {
     const response = await fetch(`${API_BASE_URL}/orders`, {
@@ -151,7 +191,8 @@ class ApiService {
     });
 
     if (!response.ok) {
-      throw new Error('Failed to update user role');
+      const errorData = await response.json().catch(() => ({ detail: 'Failed to update user role' }));
+      throw new Error(errorData.detail || 'Failed to update user role');
     }
 
     return response.json();
@@ -170,26 +211,36 @@ class ApiService {
   }
 
   // Location endpoints
+  async getLocations(): Promise<Location[]> {
+    const response = await fetch(`${API_BASE_URL}/plots/locations`);
+    if (!response.ok) throw new Error('Failed to fetch locations');
+    return response.json();
+  }
+
   async getRegions() {
     const response = await fetch(`${API_BASE_URL}/plots/locations/regions`);
     if (!response.ok) throw new Error('Failed to fetch regions');
     return response.json();
   }
 
-  async getDistricts(regionId?: number) {
-    const params = regionId ? `?region_id=${regionId}` : '';
+  async getDistricts(region?: string) {
+    const params = region ? `?region=${encodeURIComponent(region)}` : '';
     const response = await fetch(`${API_BASE_URL}/plots/locations/districts${params}`);
     if (!response.ok) throw new Error('Failed to fetch districts');
     return response.json();
   }
 
-  async getCouncils(districtId?: number) {
-    const params = districtId ? `?district_id=${districtId}` : '';
-    const response = await fetch(`${API_BASE_URL}/plots/locations/councils${params}`);
+  async getCouncils(region?: string, district?: string) {
+    const params = new URLSearchParams();
+    if (region) params.append('region', region);
+    if (district) params.append('district', district);
+    const queryString = params.toString() ? `?${params.toString()}` : '';
+    const response = await fetch(`${API_BASE_URL}/plots/locations/councils${queryString}`);
     if (!response.ok) throw new Error('Failed to fetch councils');
     return response.json();
   }
 
+  // Plot locking endpoints
   async lockPlot(plotId: string): Promise<Plot> {
     const response = await fetch(`${API_BASE_URL}/plots/${plotId}/lock`, {
       method: 'POST',
@@ -215,6 +266,7 @@ class ApiService {
 
     return response.json();
   }
+
 
   logout() {
     localStorage.removeItem('access_token');

@@ -5,7 +5,7 @@ import { PlotDetailsModal } from '../components/Plots/PlotDetailsModal';
 import SearchFilters, { FilterOptions } from '../components/Plots/SearchFilters';
 import { MapView } from '../components/Map/MapView';
 import { Plot } from '../types';
-import { supabaseApiService } from '../services/supabaseApi';
+import { apiService } from '../services/api';
 import { useLanguage } from '../contexts/LanguageContext';
 import { Map, Grid } from 'lucide-react';
 
@@ -40,7 +40,7 @@ export const Home: React.FC = () => {
         if (filters.status) searchParams.status = filters.status;
       }
 
-      const data = await supabaseApiService.getPlots(searchParams);
+      const data = await apiService.getPlots(searchParams);
       setPlots(data);
     } catch (error) {
       console.error('Error fetching plots:', error);

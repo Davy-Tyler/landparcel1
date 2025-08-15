@@ -143,3 +143,47 @@ async def read_locations(
 ):
     """Get all locations."""
     return get_locations(db, skip=skip, limit=limit)
+
+# Plot locking endpoints (basic implementation for compatibility)
+@router.post("/{plot_id}/lock", response_model=Plot)
+async def lock_plot(
+    plot_id: str,
+    db: Session = Depends(get_db),
+    current_user: UserModel = Depends(get_current_active_user)
+):
+    """Lock plot for purchase (simplified implementation)."""
+    plot = get_plot(db, plot_id)
+    if not plot:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Plot not found"
+        )
+    
+    # Simple check if plot is available
+    if plot.status != PlotStatus.AVAILABLE:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Plot is not available for locking"
+        )
+    
+    # For now, just return the plot without actually locking
+    # In a full implementation, you would update status to LOCKED and set locked_until
+    return plot
+
+@router.post("/{plot_id}/unlock", response_model=Plot)
+async def unlock_plot(
+    plot_id: str,
+    db: Session = Depends(get_db),
+    current_user: UserModel = Depends(get_current_active_user)
+):
+    """Unlock plot (simplified implementation)."""
+    plot = get_plot(db, plot_id)
+    if not plot:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Plot not found"
+        )
+    
+    # For now, just return the plot without actually unlocking
+    # In a full implementation, you would update status to AVAILABLE and clear locked_until
+    return plot

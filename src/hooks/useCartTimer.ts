@@ -1,6 +1,6 @@
 import { useEffect, useCallback } from 'react';
 import { useCart } from '../contexts/CartContext';
-import { supabaseApiService } from '../services/supabaseApi';
+import { apiService } from '../services/api';
 
 export const useCartTimer = () => {
   const { items, removeFromCart } = useCart();
@@ -16,7 +16,7 @@ export const useCartTimer = () => {
       if (timeInCart > fifteenMinutes) {
         try {
           // Unlock the plot on the server
-          await supabaseApiService.unlockPlot(item.plot.id);
+          await apiService.unlockPlot(item.plot.id);
           // Remove from cart
           removeFromCart(item.plot.id);
         } catch (error) {

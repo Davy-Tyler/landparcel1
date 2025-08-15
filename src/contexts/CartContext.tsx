@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { Plot, CartItem } from '../types';
-import { supabaseApiService } from '../services/supabaseApi';
+import { apiService } from '../services/api';
 import { useNotifications } from '../components/Notifications/NotificationService';
 
 interface CartContextType {
@@ -34,10 +34,10 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
   const addToCart = async (plot: Plot) => {
     if (!isInCart(plot.id)) {
       try {
-        // Lock the plot on the server
-        await supabaseApiService.lockPlot(plot.id);
+        // Try to lock the plot on the server
+        await apiService.lockPlot(plot.id);
         
-      setItems(prev => [...prev, { plot, addedAt: new Date() }]);
+        setItems(prev => [...prev, { plot, addedAt: new Date() }]);
         
         addNotification({
           type: 'success',
@@ -58,7 +58,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
   const removeFromCart = async (plotId: string) => {
     try {
       // Unlock the plot on the server
-      await supabaseApiService.unlockPlot(plotId);
+      await apiService.unlockPlot(plotId);
       
       addNotification({
         type: 'info',
@@ -76,7 +76,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     // Unlock all plots in cart
     for (const item of items) {
       try {
-        await supabaseApiService.unlockPlot(item.plot.id);
+        await apiService.unlockPlot(item.plot.id);
       } catch (error) {
         console.error('Error unlocking plot:', error);
       }

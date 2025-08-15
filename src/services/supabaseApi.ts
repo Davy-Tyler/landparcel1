@@ -12,11 +12,20 @@ class SupabaseApiService {
       password,
     });
 
-    if (error) throw error;
+    if (error) {
+      // Provide more specific error messages
+      if (error.message === 'Email not confirmed') {
+        throw new Error('Please check your email and click the confirmation link before signing in.');
+      } else if (error.message === 'Invalid login credentials') {
+        throw new Error('Invalid email or password. Please check your credentials and try again.');
+      }
+      throw error;
+    }
     return data;
   }
 
   async register(userData: any) {
+    // Sign up the user without email confirmation for development
     const { data, error } = await supabase.auth.signUp({
       email: userData.email,
       password: userData.password,
@@ -26,10 +35,70 @@ class SupabaseApiService {
           last_name: userData.last_name,
           phone_number: userData.phone_number,
         },
+        // Skip email confirmation in development
+        emailRedirectTo: undefined,
       },
     });
 
-    if (error) throw error;
+    if (error) {
+      console.error('Supabase registration error:', error);
+      throw error;
+    }
+
+    // Check if email confirmation is required
+    if (data.user && !data.session) {
+      console.log('User created but email not confirmed, attempting manual confirmation...');
+      
+      // For development, we'll try to confirm the user automatically
+      // This is a workaround since we can't disable email confirmation from the client
+      try {
+        // Attempt to sign in immediately (this will work if email confirmation is disabled in Supabase settings)
+        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+          email: userData.email,
+          password: userData.password,
+        });
+        
+        if (!signInError && signInData.session) {
+          console.log('Successfully signed in after registration');
+          data.session = signInData.session;
+        } else if (signInError?.message === 'Email not confirmed') {
+          // Email confirmation is required - inform the user
+          throw new Error('Please check your email and click the confirmation link before signing in.');
+        } else {
+          throw signInError || new Error('Failed to sign in after registration');
+        }
+      } catch (signInErr) {
+        console.error('Auto sign-in failed:', signInErr);
+        throw signInErr;
+      }
+    }
+
+    // Create user record in users table if we have a confirmed user
+    if (data.user && data.session) {
+      try {
+        const { error: upsertError } = await supabase
+          .from('users')
+          .upsert({
+            id: data.user.id,
+            email: userData.email,
+            first_name: userData.first_name,
+            last_name: userData.last_name,
+            phone_number: userData.phone_number,
+            role: 'user',
+            is_active: true,
+            created_at: new Date().toISOString()
+          }, {
+            onConflict: 'id'
+          });
+        
+        if (upsertError) {
+          console.error('Error creating/updating user record:', upsertError);
+        }
+      } catch (err) {
+        console.error('Error upserting user:', err);
+      }
+    }
+
     return data;
   }
 
@@ -37,6 +106,7 @@ class SupabaseApiService {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return null;
 
+<<<<<<< HEAD
     // Try to fetch existing profile row
     let { data: userData, error } = await supabase
       .from('users')
@@ -67,6 +137,82 @@ class SupabaseApiService {
     }
 
     return userData as User;
+=======
+    // Try to get user data from our users table
+    const { data: userData, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', user.id)
+      .single();
+
+    if (error) {
+      // If user doesn't exist in users table, create them
+      if (error.code === 'PGRST116') {
+        try {
+          const { data: newUser, error: insertError } = await supabase
+            .from('users')
+            .upsert({
+              id: user.id,
+              email: user.email || '',
+              first_name: user.user_metadata?.first_name || '',
+              last_name: user.user_metadata?.last_name || '',
+              phone_number: user.user_metadata?.phone_number || '',
+              role: 'user',
+              is_active: true,
+              created_at: new Date().toISOString()
+            }, {
+              onConflict: 'id'
+            })
+            .select()
+            .single();
+
+          if (insertError) {
+            console.error('Error creating user record:', insertError);
+            // Return a basic user object from auth data
+            return {
+              id: user.id,
+              email: user.email || '',
+              first_name: user.user_metadata?.first_name || '',
+              last_name: user.user_metadata?.last_name || '',
+              phone_number: user.user_metadata?.phone_number || '',
+              role: 'user',
+              is_active: true,
+              created_at: user.created_at
+            };
+          }
+          return newUser;
+        } catch (createError) {
+          console.error('Error creating user record:', createError);
+          // Return a basic user object from auth data
+          return {
+            id: user.id,
+            email: user.email || '',
+            first_name: user.user_metadata?.first_name || '',
+            last_name: user.user_metadata?.last_name || '',
+            phone_number: user.user_metadata?.phone_number || '',
+            role: 'user',
+            is_active: true,
+            created_at: user.created_at
+          };
+        }
+      } else {
+        console.error('Error fetching user data:', error);
+        // Return a basic user object from auth data
+        return {
+          id: user.id,
+          email: user.email || '',
+          first_name: user.user_metadata?.first_name || '',
+          last_name: user.user_metadata?.last_name || '',
+          phone_number: user.user_metadata?.phone_number || '',
+          role: 'user',
+          is_active: true,
+          created_at: user.created_at
+        };
+      }
+    }
+    
+    return userData;
+>>>>>>> 61df751903906e0d9da3aa6cb8b14b7f1b7683c4
   }
 
   async logout() {

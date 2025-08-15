@@ -50,3 +50,19 @@ async def read_user(
             detail="User not found"
         )
     return user
+
+@router.put("/{user_id}", response_model=User)
+async def update_user_role(
+    user_id: str,
+    user_update: UserUpdate,
+    db: Session = Depends(get_db),
+    current_user: UserModel = Depends(get_master_admin_user)
+):
+    """Update user (master admin only)."""
+    user = update_user(db, user_id, user_update)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    return user

@@ -23,9 +23,9 @@ class Settings(BaseSettings):
     ALLOWED_ORIGINS: Optional[str] = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173,http://localhost:3000")
     
     # Supabase Configuration
-    SUPABASE_URL: str = os.getenv("SUPABASE_URL", "https://kziekhazhvszdfgrekre.supabase.co")
-    SUPABASE_ANON_KEY: Optional[str] = os.getenv("SUPABASE_ANON_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt6aWVraGF6aHZzemRmZ3Jla3JlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUxNTE4ODAsImV4cCI6MjA3MDcyNzg4MH0.FrBwK9-3S06kZcPGNsQem6rmYh4JrMGkKvW0brlP6bs")
-    SUPABASE_SERVICE_ROLE_KEY: Optional[str] = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt6aWVraGF6aHZzemRmZ3Jla3JlIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NTE1MTg4MCwiZXhwIjoyMDcwNzI3ODgwfQ.5DqX-MtaxVXP-0mNhAEBMYm8IY48EIx-fhXx09RDqp8")
+    SUPABASE_URL: str = os.getenv("SUPABASE_URL", "")
+    SUPABASE_ANON_KEY: Optional[str] = os.getenv("SUPABASE_ANON_KEY", "")
+    SUPABASE_SERVICE_ROLE_KEY: Optional[str] = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
     
     # Pooler-specific notes
     # Note: This pooler does not support PREPARE statements

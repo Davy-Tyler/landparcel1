@@ -138,18 +138,18 @@ export const AdminPanel: React.FC = () => {
 
   return (
     <Layout>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Admin Panel</h1>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Admin Panel</h1>
           <p className="text-gray-600">Manage plots, orders, and users</p>
         </div>
 
         {/* Tab Navigation */}
-        <div className="border-b border-gray-200 mb-8">
-          <nav className="-mb-px flex space-x-8">
+        <div className="border-b border-gray-200 mb-6 sm:mb-8">
+          <nav className="-mb-px flex space-x-4 sm:space-x-8 overflow-x-auto">
             <button
               onClick={() => setActiveTab('plots')}
-              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              className={`py-2 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
                 activeTab === 'plots'
                   ? 'border-blue-500 text-blue-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -160,7 +160,7 @@ export const AdminPanel: React.FC = () => {
             </button>
             <button
               onClick={() => setActiveTab('orders')}
-              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              className={`py-2 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
                 activeTab === 'orders'
                   ? 'border-blue-500 text-blue-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -172,7 +172,7 @@ export const AdminPanel: React.FC = () => {
             {user.role === 'master_admin' && (
               <button
                 onClick={() => setActiveTab('users')}
-                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                className={`py-2 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
                   activeTab === 'users'
                     ? 'border-blue-500 text-blue-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -189,12 +189,12 @@ export const AdminPanel: React.FC = () => {
         <div className="bg-white rounded-lg shadow-md overflow-hidden">
           {activeTab === 'plots' && (
             <div>
-              <div className="p-6 border-b border-gray-200">
-                <div className="flex justify-between items-center">
-                  <h2 className="text-xl font-semibold text-gray-900">Plot Management</h2>
+              <div className="p-4 sm:p-6 border-b border-gray-200">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-3 sm:space-y-0">
+                  <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Plot Management</h2>
                   <button 
                     onClick={() => setShowUploadModal(true)}
-                    className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors flex items-center"
+                    className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors flex items-center justify-center"
                   >
                     <Plus className="w-4 h-4 mr-2" />
                     Add Plot
@@ -203,7 +203,7 @@ export const AdminPanel: React.FC = () => {
               </div>
 
               {loading ? (
-                <div className="p-6">
+                <div className="p-4 sm:p-6">
                   <div className="animate-pulse space-y-4">
                     {Array.from({ length: 5 }).map((_, index) => (
                       <div key={index} className="h-16 bg-gray-200 rounded"></div>
@@ -212,61 +212,72 @@ export const AdminPanel: React.FC = () => {
                 </div>
               ) : (
                 <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Plot
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Location
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Price
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Status
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Actions
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {plots.map((plot) => (
-                        <tr key={plot.id}>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div>
-                              <div className="text-sm font-medium text-gray-900">{plot.title}</div>
-                              <div className="text-sm text-gray-500">{plot.area_sqm.toLocaleString()} sqm</div>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {plot.council?.name}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {formatCurrency(plot.price)}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(plot.status)}`}>
-                              {plot.status.replace('_', ' ')}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                            <button className="text-blue-600 hover:text-blue-900">
-                              <Eye className="w-4 h-4" />
-                            </button>
-                            <button className="text-green-600 hover:text-green-900">
-                              <Edit className="w-4 h-4" />
-                            </button>
-                            <button className="text-red-600 hover:text-red-900">
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </td>
+                  <div className="min-w-full inline-block align-middle">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Plot
+                          </th>
+                          <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
+                            Location
+                          </th>
+                          <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Price
+                          </th>
+                          <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">
+                            Status
+                          </th>
+                          <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Actions
+                          </th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {plots.map((plot) => (
+                          <tr key={plot.id}>
+                            <td className="px-3 sm:px-6 py-4">
+                              <div>
+                                <div className="text-sm font-medium text-gray-900 truncate max-w-xs">
+                                  {plot.title}
+                                </div>
+                                <div className="text-sm text-gray-500">
+                                  {plot.area_sqm.toLocaleString()} sqm
+                                </div>
+                                <div className="sm:hidden text-sm text-gray-500 mt-1">
+                                  {plot.council?.name}
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-3 sm:px-6 py-4 text-sm text-gray-500 hidden sm:table-cell">
+                              {plot.council?.name}
+                            </td>
+                            <td className="px-3 sm:px-6 py-4 text-sm text-gray-900 font-medium">
+                              {formatCurrency(plot.price)}
+                            </td>
+                            <td className="px-3 sm:px-6 py-4 hidden md:table-cell">
+                              <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(plot.status)}`}>
+                                {plot.status.replace('_', ' ')}
+                              </span>
+                            </td>
+                            <td className="px-3 sm:px-6 py-4 text-sm font-medium">
+                              <div className="flex space-x-1 sm:space-x-2">
+                                <button className="text-blue-600 hover:text-blue-900 p-1">
+                                  <Eye className="w-4 h-4" />
+                                </button>
+                                <button className="text-green-600 hover:text-green-900 p-1">
+                                  <Edit className="w-4 h-4" />
+                                </button>
+                                <button className="text-red-600 hover:text-red-900 p-1">
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               )}
             </div>

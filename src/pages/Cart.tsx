@@ -5,7 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { Trash2, ShoppingCart } from 'lucide-react';
 import { formatCurrency } from '../utils/formatters';
-import { supabaseApiService } from '../services/supabaseApi';
+import { apiService } from '../services/api';
 import { useNotifications } from '../components/Notifications/NotificationService';
 
 export const Cart: React.FC = () => {
@@ -24,7 +24,7 @@ export const Cart: React.FC = () => {
     try {
       // Create orders for each plot in cart
       for (const item of items) {
-        await supabaseApiService.createOrder(item.plot.id);
+        await apiService.createOrder(item.plot.id);
       }
 
       clearCart();
@@ -78,17 +78,17 @@ export const Cart: React.FC = () => {
 
   return (
     <Layout>
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">{t('cart.title')}</h1>
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6 sm:mb-8">{t('cart.title')}</h1>
 
         <div className="bg-white rounded-lg shadow-md overflow-hidden">
           {/* Cart Items */}
           <div className="divide-y divide-gray-200">
             {items.map((item, index) => (
-              <div key={item.plot.id} className="p-6">
-                <div className="flex items-center space-x-4">
-                  <div className="flex-shrink-0">
-                    <div className="w-16 h-16 bg-gray-200 rounded-lg flex items-center justify-center">
+              <div key={item.plot.id} className="p-4 sm:p-6">
+                <div className="flex flex-col sm:flex-row sm:items-center space-y-4 sm:space-y-0 sm:space-x-4">
+                  <div className="flex-shrink-0 self-center sm:self-auto">
+                    <div className="w-20 h-20 sm:w-16 sm:h-16 bg-gray-200 rounded-lg flex items-center justify-center">
                       {item.plot.image_urls && item.plot.image_urls.length > 0 ? (
                         <img
                           src={item.plot.image_urls[0]}
@@ -101,7 +101,7 @@ export const Cart: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="flex-1 min-w-0">
+                  <div className="flex-1 min-w-0 text-center sm:text-left">
                     <h3 className="text-lg font-semibold text-gray-900 truncate">
                       {item.plot.title}
                     </h3>
@@ -113,13 +113,13 @@ export const Cart: React.FC = () => {
                     </p>
                   </div>
 
-                  <div className="text-right">
+                  <div className="text-center sm:text-right">
                     <p className="text-lg font-bold text-gray-900">
                       {formatCurrency(item.plot.price)}
                     </p>
                     <button
                       onClick={() => handleRemoveItem(item.plot.id)}
-                      className="mt-2 flex items-center text-red-600 hover:text-red-800 transition-colors"
+                      className="mt-2 inline-flex items-center text-red-600 hover:text-red-800 transition-colors"
                     >
                       <Trash2 className="w-4 h-4 mr-1" />
                       {t('common.delete')}
@@ -131,24 +131,24 @@ export const Cart: React.FC = () => {
           </div>
 
           {/* Cart Summary */}
-          <div className="bg-gray-50 p-6">
-            <div className="flex justify-between items-center mb-4">
-              <span className="text-lg font-semibold text-gray-900">{t('cart.total')}</span>
-              <span className="text-2xl font-bold text-gray-900">
+          <div className="bg-gray-50 p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 space-y-2 sm:space-y-0">
+              <span className="text-lg font-semibold text-gray-900 text-center sm:text-left">{t('cart.total')}</span>
+              <span className="text-xl sm:text-2xl font-bold text-gray-900 text-center sm:text-right">
                 {formatCurrency(totalPrice)}
               </span>
             </div>
 
-            <div className="flex space-x-4">
+            <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4">
               <button
                 onClick={() => clearCart()}
-                className="flex-1 bg-gray-200 text-gray-800 py-3 px-6 rounded-md hover:bg-gray-300 transition-colors"
+                className="flex-1 bg-gray-200 text-gray-800 py-3 px-6 rounded-md hover:bg-gray-300 transition-colors text-center"
               >
                 {t('cart.clear_cart')}
               </button>
               <button
                 onClick={handleCheckout}
-                className="flex-1 bg-blue-600 text-white py-3 px-6 rounded-md hover:bg-blue-700 transition-colors"
+                className="flex-1 bg-blue-600 text-white py-3 px-6 rounded-md hover:bg-blue-700 transition-colors text-center"
               >
                 {t('cart.checkout')}
               </button>
