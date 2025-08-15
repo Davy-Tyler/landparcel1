@@ -1,7 +1,7 @@
 from typing import List, Optional
 from sqlalchemy.orm import Session
 from app.db.models import User
-from app.schemas.user import UserCreate, UserUpdate
+from app.schemas.user import UserCreate, UserUpdate, UserCreateFromAuth
 from app.core.security import get_password_hash
 
 def get_user(db: Session, user_id: str) -> Optional[User]:
@@ -25,6 +25,21 @@ def create_user(db: Session, user: UserCreate) -> User:
         email=user.email,
         phone_number=user.phone_number,
         hashed_password=hashed_password
+    )
+    db.add(db_user)
+    db.commit()
+    db.refresh(db_user)
+    return db_user
+
+def create_user_from_auth(db: Session, user: UserCreateFromAuth) -> User:
+    """Create new user from Supabase auth data."""
+    db_user = User(
+        id=user.id,
+        first_name=user.first_name,
+        last_name=user.last_name,
+        email=user.email,
+        phone_number=user.phone_number,
+        hashed_password='supabase-auth'  # Placeholder since Supabase manages auth
     )
     db.add(db_user)
     db.commit()

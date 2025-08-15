@@ -160,7 +160,7 @@ async def lock_plot(
         )
     
     # Simple check if plot is available
-    if plot.status != PlotStatus.AVAILABLE:
+    if plot.status.value != PlotStatus.AVAILABLE.value:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Plot is not available for locking"

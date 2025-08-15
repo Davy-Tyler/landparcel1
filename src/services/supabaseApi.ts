@@ -106,84 +106,40 @@ class SupabaseApiService {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return null;
 
-<<<<<<< HEAD
-    // Try to fetch existing profile row
+    // Try to get user data from our users table by id (primary key)
     let { data: userData, error } = await supabase
       .from('users')
       .select('*')
-      .eq('email', user.email)
+      .eq('id', user.id)
       .maybeSingle();
 
-    if (error) throw error;
-
-    // Self-heal: if no row, create one (hashed_password required by schema)
-    if (!userData) {
-      const insertPayload: any = {
-        email: user.email,
-        first_name: user.user_metadata?.first_name || null,
-        last_name: user.user_metadata?.last_name || null,
-        phone_number: user.user_metadata?.phone_number || null,
-        hashed_password: HASH_PLACEHOLDER,
-        role: 'user',
-        is_active: true
-      };
-      const { data: inserted, error: insertError } = await supabase
-        .from('users')
-        .insert(insertPayload)
-        .select('*')
-        .single();
-      if (insertError) throw insertError;
-      userData = inserted as User;
+    if (error && error.code !== 'PGRST116') {
+      console.error('Error fetching user data:', error);
     }
 
-    return userData as User;
-=======
-    // Try to get user data from our users table
-    const { data: userData, error } = await supabase
-      .from('users')
-      .select('*')
-      .eq('id', user.id)
-      .single();
+    // If user doesn't exist in users table, create them
+    if (!userData) {
+      try {
+        const insertPayload = {
+          id: user.id,
+          email: user.email || '',
+          first_name: user.user_metadata?.first_name || '',
+          last_name: user.user_metadata?.last_name || '',
+          phone_number: user.user_metadata?.phone_number || '',
+          hashed_password: HASH_PLACEHOLDER,
+          role: 'user' as const,
+          is_active: true,
+        };
 
-    if (error) {
-      // If user doesn't exist in users table, create them
-      if (error.code === 'PGRST116') {
-        try {
-          const { data: newUser, error: insertError } = await supabase
-            .from('users')
-            .upsert({
-              id: user.id,
-              email: user.email || '',
-              first_name: user.user_metadata?.first_name || '',
-              last_name: user.user_metadata?.last_name || '',
-              phone_number: user.user_metadata?.phone_number || '',
-              role: 'user',
-              is_active: true,
-              created_at: new Date().toISOString()
-            }, {
-              onConflict: 'id'
-            })
-            .select()
-            .single();
+        const { data: newUser, error: insertError } = await supabase
+          .from('users')
+          .upsert(insertPayload, { onConflict: 'id' })
+          .select()
+          .single();
 
-          if (insertError) {
-            console.error('Error creating user record:', insertError);
-            // Return a basic user object from auth data
-            return {
-              id: user.id,
-              email: user.email || '',
-              first_name: user.user_metadata?.first_name || '',
-              last_name: user.user_metadata?.last_name || '',
-              phone_number: user.user_metadata?.phone_number || '',
-              role: 'user',
-              is_active: true,
-              created_at: user.created_at
-            };
-          }
-          return newUser;
-        } catch (createError) {
-          console.error('Error creating user record:', createError);
-          // Return a basic user object from auth data
+        if (insertError) {
+          console.error('Error creating user record:', insertError);
+          // Return fallback user object from auth data
           return {
             id: user.id,
             email: user.email || '',
@@ -195,9 +151,10 @@ class SupabaseApiService {
             created_at: user.created_at
           };
         }
-      } else {
-        console.error('Error fetching user data:', error);
-        // Return a basic user object from auth data
+        userData = newUser;
+      } catch (createError) {
+        console.error('Error creating user record:', createError);
+        // Return fallback user object from auth data
         return {
           id: user.id,
           email: user.email || '',
@@ -210,9 +167,8 @@ class SupabaseApiService {
         };
       }
     }
-    
+
     return userData;
->>>>>>> 61df751903906e0d9da3aa6cb8b14b7f1b7683c4
   }
 
   async logout() {
