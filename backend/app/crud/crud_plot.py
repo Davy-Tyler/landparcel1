@@ -96,16 +96,6 @@ def search_plots(db: Session, search_params: PlotSearch, skip: int = 0, limit: i
     
     return query.offset(skip).limit(limit).all()
 
-def create_plot(db: Session, plot: PlotCreate, user_id: str) -> Plot:
-    """Create new plot."""
-    db_plot = Plot(
-        **plot.dict(),
-        uploaded_by_id=user_id
-    )
-    db.add(db_plot)
-    db.commit()
-    db.refresh(db_plot)
-    return db_plot
 
 def update_plot(db: Session, plot_id: str, plot_update: PlotUpdate) -> Optional[Plot]:
     """Update plot."""

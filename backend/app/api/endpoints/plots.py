@@ -10,7 +10,7 @@ from app.crud.crud_plot import (
 )
 from app.crud.crud_location import (
     get_regions, get_districts_by_region, get_councils_by_district,
-    get_locations
+    get_locations, get_location_by_name
 )
 from app.db.session import get_db
 from app.schemas.plot import Plot, PlotCreate, PlotUpdate, PlotSearch
@@ -74,7 +74,21 @@ async def create_new_plot(
     current_user: UserModel = Depends(get_admin_user)
 ):
     """Create new plot (admin only)."""
-    return create_plot(db, plot_data, str(current_user.id))
+    # Handle location_id - if it's a string name, find the location
+    location_id = plot_data.location_id
+    if location_id and not location_id.startswith('uuid:'):
+        # Try to find location by name
+        location = get_location_by_name(db, location_id)
+        if location:
+            location_id = str(location.id)
+        else:
+            location_id = None
+    
+    # Create plot data with resolved location_id
+    plot_create_data = plot_data.dict()
+    plot_create_data['location_id'] = location_id
+    
+    return create_plot(db, PlotCreate(**plot_create_data), str(current_user.id))
 
 @router.put("/{plot_id}", response_model=Plot)
 async def update_existing_plot(

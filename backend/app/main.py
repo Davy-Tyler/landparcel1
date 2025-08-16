@@ -20,6 +20,9 @@ logger = logging.getLogger("app.main")
 # Load environment variables
 load_dotenv()
 
+# Create upload directory if it doesn't exist
+os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
+
 # Don't create tables automatically since we're using existing Supabase database
 # Base.metadata.create_all(bind=engine)
 
@@ -62,13 +65,19 @@ async def health_check():
 @app.on_event("startup")
 async def startup_event():
     """Initialize services on startup"""
-    await redis_client.connect()
+    try:
+        await redis_client.connect()
+    except Exception as e:
+        logger.warning(f"Redis connection failed: {e}. Continuing without Redis.")
     await startup_diagnostics()
 
 @app.on_event("shutdown")
 async def shutdown_event():
     """Cleanup on shutdown"""
-    await redis_client.disconnect()
+    try:
+        await redis_client.disconnect()
+    except Exception as e:
+        logger.warning(f"Redis disconnect failed: {e}")
 
 async def startup_diagnostics():
     """Log DB connectivity & schema presence (non-intrusive)."""

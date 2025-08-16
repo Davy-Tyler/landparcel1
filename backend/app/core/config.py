@@ -36,7 +36,7 @@ class Settings(BaseSettings):
     
     # File Upload Configuration
     MAX_FILE_SIZE: int = 50 * 1024 * 1024  # 50MB
-    UPLOAD_DIR: str = os.getenv("UPLOAD_DIR", "/tmp/uploads")
+    UPLOAD_DIR: str = os.getenv("UPLOAD_DIR", "uploads")
     
     # WebSocket Configuration
     WEBSOCKET_PORT: int = int(os.getenv("WEBSOCKET_PORT", "8001"))

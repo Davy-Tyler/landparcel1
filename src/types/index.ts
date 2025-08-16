@@ -25,6 +25,26 @@ export interface LocationHierarchy {
   };
 }
 
+// Legacy interfaces for backward compatibility
+export interface Region {
+  id: number;
+  name: string;
+}
+
+export interface District {
+  id: number;
+  name: string;
+  region_id: number;
+  region?: Region;
+}
+
+export interface Council {
+  id: number;
+  name: string;
+  district_id: number;
+  district?: District;
+}
+
 export interface Plot {
   id: string;
   plot_number?: string;

@@ -244,33 +244,15 @@ export const Header: React.FC = () => {
 
               {/* Language Selector Mobile */}
               <div className="px-3 py-2">
-                    <div className="flex flex-col sm:flex-row gap-2">
-                      <button 
-                        onClick={() => setShowUploadModal(true)}
-                        className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors flex items-center justify-center"
-                      >
-                        <Plus className="w-4 h-4 mr-2" />
-                        Add Plot
-                      </button>
-                      <button 
-                        onClick={() => setShowShapefileModal(true)}
-                        className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors flex items-center justify-center"
-                      >
-                        <Plus className="w-4 h-4 mr-2" />
-                        Upload Shapefile
-                      </button>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => {
-                      logout();
-                      closeMobileMenu();
-                    }}
-                    className="block w-full text-left px-3 py-2 text-base font-medium text-red-600 hover:text-red-700 hover:bg-red-50 rounded-md transition-colors"
-                  >
-                    {t('nav.logout')}
-                  </button>
-                </div>
+                <select
+                  value={language}
+                  onChange={(e) => setLanguage(e.target.value as 'en' | 'sw')}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                >
+                  <option value="en">English</option>
+                  <option value="sw">Kiswahili</option>
+                </select>
+              </div>
               ) : (
                 <div className="border-t border-gray-200 pt-2 mt-2 space-y-1">
                   <Link
@@ -296,3 +278,23 @@ export const Header: React.FC = () => {
     </header>
   );
 };
+
+              {user ? (
+                <div className="border-t border-gray-200 pt-2 mt-2 space-y-1">
+                  <Link
+                    to="/dashboard"
+                    className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-md transition-colors"
+                    onClick={closeMobileMenu}
+                  >
+                    Dashboard
+                  </Link>
+                  <button
+                    onClick={() => {
+                      logout();
+                      closeMobileMenu();
+                    }}
+                    className="block w-full text-left px-3 py-2 text-base font-medium text-red-600 hover:text-red-700 hover:bg-red-50 rounded-md transition-colors"
+                  >
+                    {t('nav.logout')}
+                  </button>
+                </div>

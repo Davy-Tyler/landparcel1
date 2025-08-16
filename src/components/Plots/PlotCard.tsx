@@ -69,7 +69,7 @@ export const PlotCard: React.FC<PlotCardProps> = ({ plot, onViewDetails }) => {
           {plot.council && (
             <div className="flex items-center">
               <MapPin className="w-4 h-4 mr-1" />
-              <span>{plot.council.name}</span>
+              <span>{plot.location?.name}</span>
             </div>
           )}
         </div>

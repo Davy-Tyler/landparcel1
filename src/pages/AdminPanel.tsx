@@ -264,12 +264,12 @@ export const AdminPanel: React.FC = () => {
                                   {plot.area_sqm.toLocaleString()} sqm
                                 </div>
                                 <div className="sm:hidden text-sm text-gray-500 mt-1">
-                                  {plot.council?.name}
+                                  {plot.location?.name}
                                 </div>
                               </div>
                             </td>
                             <td className="px-3 sm:px-6 py-4 text-sm text-gray-500 hidden sm:table-cell">
-                              {plot.council?.name}
+                              {plot.location?.name}
                             </td>
                             <td className="px-3 sm:px-6 py-4 text-sm text-gray-900 font-medium">
                               {formatCurrency(plot.price)}

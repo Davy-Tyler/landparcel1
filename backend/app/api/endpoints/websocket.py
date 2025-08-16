@@ -138,6 +138,12 @@ async def broadcast_plot_update(plot_data: Dict[str, Any]):
     # Send via WebSocket
     await manager.broadcast(message)
     
+    # Try to send via Redis if available
+    try:
+        await redis_client.publish('plot_updates', message)
+    except Exception:
+        pass  # Continue without Redis
+    
     # Send via Redis for other instances
     await redis_client.publish('plot_updates', message)
 

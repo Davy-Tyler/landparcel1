@@ -73,7 +73,7 @@ export const Home: React.FC = () => {
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Filters Sidebar */}
           <div className="lg:w-1/4">
-            <SearchFilters onFilterChange={handleFiltersChange} />
+            <SearchFilters onFilterChange={handleFiltersChange} locations={[]} />
           </div>
 
           {/* Main Content */}
