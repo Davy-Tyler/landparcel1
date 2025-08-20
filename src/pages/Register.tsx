@@ -45,12 +45,13 @@ export const Register: React.FC = () => {
     try {
       const success = await register(formData);
       if (success) {
-        navigate('/login');
+        navigate('/home');
       } else {
         setError('Registration failed. Please try again.');
       }
-    } catch (error) {
-      setError('An error occurred. Please try again.');
+    } catch (error: any) {
+      const message = error?.message || 'An error occurred. Please try again.';
+      setError(message);
     } finally {
       setLoading(false);
     }

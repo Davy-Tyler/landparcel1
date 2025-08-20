@@ -4,6 +4,27 @@ from sqlalchemy import and_, or_
 from app.db.models import Plot, Location, PlotStatus
 from app.schemas.plot import PlotCreate, PlotUpdate, PlotSearch
 
+def create_plot(db: Session, plot: PlotCreate, user_id: str, geometry: dict = None) -> Plot:
+    """Create new plot with optional geometry."""
+    plot_data = plot.dict()
+    
+    # Handle geometry if provided
+    if geometry:
+        from sqlalchemy import text
+        # Convert GeoJSON to PostGIS geometry
+        geom_query = text("SELECT ST_GeomFromGeoJSON(:geom_json)")
+        result = db.execute(geom_query, {'geom_json': str(geometry)})
+        plot_data['geom'] = result.scalar()
+    
+    db_plot = Plot(
+        **plot_data,
+        uploaded_by_id=user_id
+    )
+    db.add(db_plot)
+    db.commit()
+    db.refresh(db_plot)
+    return db_plot
+
 def get_plot(db: Session, plot_id: str) -> Optional[Plot]:
     """Get plot by ID with location details."""
     return db.query(Plot).options(
@@ -52,13 +73,14 @@ def search_plots(db: Session, search_params: PlotSearch, skip: int = 0, limit: i
         query = query.join(Location).filter(Location.hierarchy['region'].astext == search_params.region)
     
     if search_params.district:
-        query = query.join(Location).filter(Location.hierarchy['districts'].op('?')(search_params.district))
+        query = query.join(Location).filter(Location.hierarchy['districts'].has_key(search_params.district))
     
     if search_params.council:
-        # Search for council in any district's councils array
+        # Search for council in districts councils arrays
+        from sqlalchemy import text
         query = query.join(Location).filter(
-            Location.hierarchy['districts'].op('@>')(f'{{"*": {{"councils": ["{search_params.council}"]}}}}')
-        )
+            text("EXISTS (SELECT 1 FROM jsonb_each(hierarchy->'districts') AS d(key, value) WHERE value->'councils' ? :council)")
+        ).params(council=search_params.council)
     
     if search_params.usage_type:
         query = query.filter(Plot.usage_type == search_params.usage_type)
@@ -74,16 +96,6 @@ def search_plots(db: Session, search_params: PlotSearch, skip: int = 0, limit: i
     
     return query.offset(skip).limit(limit).all()
 
-def create_plot(db: Session, plot: PlotCreate, user_id: str) -> Plot:
-    """Create new plot."""
-    db_plot = Plot(
-        **plot.dict(),
-        uploaded_by_id=user_id
-    )
-    db.add(db_plot)
-    db.commit()
-    db.refresh(db_plot)
-    return db_plot
 
 def update_plot(db: Session, plot_id: str, plot_update: PlotUpdate) -> Optional[Plot]:
     """Update plot."""

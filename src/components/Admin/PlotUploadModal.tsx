@@ -17,7 +17,7 @@ interface PlotFormData {
   price: number;
   usage_type: string;
   plot_number: string;
-  council_id: number;
+  location_id: string;
   image_urls: string[];
 }
 
@@ -34,15 +34,15 @@ export const PlotUploadModal: React.FC<PlotUploadModalProps> = ({
     price: 0,
     usage_type: 'Residential',
     plot_number: '',
-    council_id: 0,
+    location_id: '',
     image_urls: [],
   });
-
-  const [regions, setRegions] = useState<Region[]>([]);
-  const [districts, setDistricts] = useState<District[]>([]);
-  const [councils, setCouncils] = useState<Council[]>([]);
-  const [selectedRegion, setSelectedRegion] = useState<number>(0);
-  const [selectedDistrict, setSelectedDistrict] = useState<number>(0);
+  setSelectedRegion('');
+  setSelectedDistrict('');
+  const [districts, setDistricts] = useState<string[]>([]);
+  const [councils, setCouncils] = useState<string[]>([]);
+  const [selectedRegion, setSelectedRegion] = useState<string>('');
+  const [selectedDistrict, setSelectedDistrict] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [imageUrl, setImageUrl] = useState('');
 
@@ -80,7 +80,7 @@ export const PlotUploadModal: React.FC<PlotUploadModalProps> = ({
 
   const fetchDistricts = async (regionId: number) => {
     try {
-      const data = await apiService.getDistricts(regionId);
+      const data = await apiService.getDistricts(regionId.toString());
       setDistricts(data);
     } catch (error) {
       console.error('Error fetching districts:', error);
@@ -89,7 +89,7 @@ export const PlotUploadModal: React.FC<PlotUploadModalProps> = ({
 
   const fetchCouncils = async (districtId: number) => {
     try {
-      const data = await apiService.getCouncils(districtId);
+      const data = await apiService.getCouncils(undefined, districtId.toString());
       setCouncils(data);
     } catch (error) {
       console.error('Error fetching councils:', error);
@@ -100,7 +100,7 @@ export const PlotUploadModal: React.FC<PlotUploadModalProps> = ({
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: name === 'area_sqm' || name === 'price' || name === 'council_id' 
+      [name]: name === 'area_sqm' || name === 'price' || name === 'location_id' 
         ? parseFloat(value) || 0 
         : value
     }));
@@ -287,14 +287,14 @@ export const PlotUploadModal: React.FC<PlotUploadModalProps> = ({
               </label>
               <select
                 value={selectedRegion}
-                onChange={(e) => setSelectedRegion(parseInt(e.target.value))}
+                onChange={(e) => setSelectedRegion(e.target.value)}
                 required
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="">Select Region</option>
                 {regions.map((region) => (
-                  <option key={region.id} value={region.id}>
-                    {region.name}
+                  <option key={region} value={region}>
+                    {region}
                   </option>
                 ))}
               </select>
@@ -306,15 +306,15 @@ export const PlotUploadModal: React.FC<PlotUploadModalProps> = ({
               </label>
               <select
                 value={selectedDistrict}
-                onChange={(e) => setSelectedDistrict(parseInt(e.target.value))}
+                onChange={(e) => setSelectedDistrict(e.target.value)}
                 required
                 disabled={!selectedRegion}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
               >
                 <option value="">Select District</option>
                 {districts.map((district) => (
-                  <option key={district.id} value={district.id}>
-                    {district.name}
+                  <option key={district} value={district}>
+                    {district}
                   </option>
                 ))}
               </select>
@@ -322,20 +322,20 @@ export const PlotUploadModal: React.FC<PlotUploadModalProps> = ({
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Council *
+                Location *
               </label>
               <select
-                name="council_id"
-                value={formData.council_id}
+                name="location_id"
+                value={formData.location_id}
                 onChange={handleInputChange}
                 required
                 disabled={!selectedDistrict}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
               >
-                <option value="">Select Council</option>
-                {councils.map((council) => (
-                  <option key={council.id} value={council.id}>
-                    {council.name}
+                <option value="">Select Location</option>
+                {councils.map((council, index) => (
+                  <option key={index} value={council}>
+                    {council}
                   </option>
                 ))}
               </select>

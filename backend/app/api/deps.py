@@ -14,6 +14,31 @@ security = HTTPBearer()
 # Placeholder for hashed_password when using Supabase auth
 SUPABASE_AUTH_PLACEHOLDER = 'supabase-auth'
 
+def get_current_user_ws(websocket, token: str = None) -> User:
+    """Get current user for WebSocket connections (optional auth)."""
+    if not token:
+        return None
+    
+    try:
+        from app.db.session import SessionLocal
+        db = SessionLocal()
+        
+        # Verify Supabase JWT token
+        payload = verify_supabase_token(token)
+        user_id = extract_user_id(payload)
+        email = extract_user_email(payload)
+        
+        # Try to get user by ID first, then by email
+        user = get_user(db, user_id=user_id)
+        if not user:
+            user = get_user_by_email(db, email=email)
+        
+        db.close()
+        return user
+    except Exception as e:
+        logger.error(f"WebSocket auth error: {e}")
+        return None
+
 def get_current_user(
     db: Session = Depends(get_db),
     credentials: HTTPAuthorizationCredentials = Depends(security)

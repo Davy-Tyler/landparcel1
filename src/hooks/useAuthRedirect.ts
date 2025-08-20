@@ -10,7 +10,7 @@ export const useAuthRedirect = () => {
     // Only redirect if we're not loading and user is authenticated
     if (!loading && user) {
       console.log('User authenticated, redirecting to home...');
-      navigate('/', { replace: true });
+      navigate('/home', { replace: true });
     }
   }, [user, loading, navigate]);
 

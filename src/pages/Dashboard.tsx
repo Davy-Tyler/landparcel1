@@ -156,7 +156,7 @@ export const Dashboard: React.FC = () => {
                             <div className="flex items-center">
                               <MapPin className="w-4 h-4 mr-1" />
                               <span>
-                                {order.plot?.council?.name}, {order.plot?.council?.district?.name}
+                                {order.plot?.location?.name}
                               </span>
                             </div>
                             

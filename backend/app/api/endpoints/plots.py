@@ -10,7 +10,7 @@ from app.crud.crud_plot import (
 )
 from app.crud.crud_location import (
     get_regions, get_districts_by_region, get_councils_by_district,
-    get_locations
+    get_locations, get_location_by_name
 )
 from app.db.session import get_db
 from app.schemas.plot import Plot, PlotCreate, PlotUpdate, PlotSearch
@@ -74,7 +74,21 @@ async def create_new_plot(
     current_user: UserModel = Depends(get_admin_user)
 ):
     """Create new plot (admin only)."""
-    return create_plot(db, plot_data, str(current_user.id))
+    # Handle location_id - if it's a string name, find the location
+    location_id = plot_data.location_id
+    if location_id and not location_id.startswith('uuid:'):
+        # Try to find location by name
+        location = get_location_by_name(db, location_id)
+        if location:
+            location_id = str(location.id)
+        else:
+            location_id = None
+    
+    # Create plot data with resolved location_id
+    plot_create_data = plot_data.dict()
+    plot_create_data['location_id'] = location_id
+    
+    return create_plot(db, PlotCreate(**plot_create_data), str(current_user.id))
 
 @router.put("/{plot_id}", response_model=Plot)
 async def update_existing_plot(
@@ -151,7 +165,7 @@ async def lock_plot(
     db: Session = Depends(get_db),
     current_user: UserModel = Depends(get_current_active_user)
 ):
-    """Lock plot for purchase (simplified implementation)."""
+    """Lock plot for purchase."""
     plot = get_plot(db, plot_id)
     if not plot:
         raise HTTPException(
@@ -159,15 +173,17 @@ async def lock_plot(
             detail="Plot not found"
         )
     
-    # Simple check if plot is available
     if plot.status.value != PlotStatus.AVAILABLE.value:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Plot is not available for locking"
         )
     
-    # For now, just return the plot without actually locking
-    # In a full implementation, you would update status to LOCKED and set locked_until
+    # Update plot status to locked
+    update_plot_status(db, plot_id, PlotStatus.LOCKED)
+    
+    # Return updated plot
+    updated_plot = get_plot(db, plot_id)
     return plot
 
 @router.post("/{plot_id}/unlock", response_model=Plot)
@@ -176,7 +192,7 @@ async def unlock_plot(
     db: Session = Depends(get_db),
     current_user: UserModel = Depends(get_current_active_user)
 ):
-    """Unlock plot (simplified implementation)."""
+    """Unlock plot."""
     plot = get_plot(db, plot_id)
     if not plot:
         raise HTTPException(
@@ -184,6 +200,9 @@ async def unlock_plot(
             detail="Plot not found"
         )
     
-    # For now, just return the plot without actually unlocking
-    # In a full implementation, you would update status to AVAILABLE and clear locked_until
+    # Update plot status to available
+    update_plot_status(db, plot_id, PlotStatus.AVAILABLE)
+    
+    # Return updated plot
+    updated_plot = get_plot(db, plot_id)
     return plot

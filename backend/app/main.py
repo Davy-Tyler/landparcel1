@@ -9,14 +9,19 @@ from sqlalchemy import text, inspect
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.api.endpoints import users, plots, orders, auth
+from app.api.endpoints import geo, websocket
 from app.core.config import settings
 from app.db.session import engine
 from app.db.models import Base
+from app.core.redis import redis_client
 
 logger = logging.getLogger("app.main")
 
 # Load environment variables
 load_dotenv()
+
+# Create upload directory if it doesn't exist
+os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
 
 # Don't create tables automatically since we're using existing Supabase database
 # Base.metadata.create_all(bind=engine)
@@ -32,7 +37,7 @@ app = FastAPI(
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000", "*"],  # Add your frontend URLs
+    allow_origins=["http://localhost:5173", "http://localhost:3000"],  # Frontend URLs
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -46,6 +51,8 @@ app.include_router(auth.router, prefix="/api/auth", tags=["authentication"])
 app.include_router(users.router, prefix="/api/users", tags=["users"])
 app.include_router(plots.router, prefix="/api/plots", tags=["plots"])
 app.include_router(orders.router, prefix="/api/orders", tags=["orders"])
+app.include_router(geo.router, prefix="/api/geo", tags=["geospatial"])
+app.include_router(websocket.router, prefix="/api", tags=["websocket"])
 
 @app.get("/")
 async def root():
@@ -56,6 +63,22 @@ async def health_check():
     return {"status": "healthy"}
 
 @app.on_event("startup")
+async def startup_event():
+    """Initialize services on startup"""
+    try:
+        await redis_client.connect()
+    except Exception as e:
+        logger.warning(f"Redis connection failed: {e}. Continuing without Redis.")
+    await startup_diagnostics()
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """Cleanup on shutdown"""
+    try:
+        await redis_client.disconnect()
+    except Exception as e:
+        logger.warning(f"Redis disconnect failed: {e}")
+
 async def startup_diagnostics():
     """Log DB connectivity & schema presence (non-intrusive)."""
     if os.getenv("SKIP_DB_CHECK") == "1":

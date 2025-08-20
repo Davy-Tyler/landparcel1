@@ -68,7 +68,9 @@ def get_districts_by_region(db: Session, region: str) -> List[str]:
 
 def get_councils_by_district(db: Session, region: str, district: str) -> List[str]:
     """Get all councils in a district."""
-    locations = db.query(Location).filter(Location.hierarchy['region'].astext == region).all()
+    locations = db.query(Location).filter(
+        Location.hierarchy['region'].astext == region
+    ).all()
     councils = set()
     for location in locations:
         # Properly access the JSONB data using getattr

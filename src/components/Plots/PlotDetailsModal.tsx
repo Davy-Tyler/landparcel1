@@ -113,13 +113,7 @@ export const PlotDetailsModal: React.FC<PlotDetailsModalProps> = ({
                     <MapPin className="w-5 h-5 text-gray-400" />
                     <div>
                       <p className="text-sm text-gray-600">Location</p>
-                      <p className="font-semibold">{plot.council.name}</p>
-                      {plot.council.district && (
-                        <p className="text-sm text-gray-500">
-                          {plot.council.district.name}
-                          {plot.council.district.region && `, ${plot.council.district.region.name}`}
-                        </p>
-                      )}
+                      <p className="font-semibold">{plot.location?.name}</p>
                     </div>
                   </div>
                 )}

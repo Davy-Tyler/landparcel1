@@ -4,7 +4,9 @@ import { AuthProvider } from './contexts/AuthContext';
 import { CartProvider } from './contexts/CartContext';
 import { LanguageProvider } from './contexts/LanguageContext';
 import { NotificationProvider } from './components/Notifications/NotificationService';
+import { WebSocketProvider } from './components/WebSocket/WebSocketProvider';
 import { useCartTimer } from './hooks/useCartTimer';
+import { Landing } from './pages/Landing';
 import { Home } from './pages/Home';
 import { Login } from './pages/Login';
 import { Register } from './pages/Register';
@@ -18,7 +20,8 @@ const AppContent: React.FC = () => {
   
   return (
     <Routes>
-      <Route path="/" element={<Home />} />
+      <Route path="/" element={<Landing />} />
+      <Route path="/home" element={<Home />} />
       <Route path="/map" element={<MapView />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
@@ -32,15 +35,17 @@ const AppContent: React.FC = () => {
 function App() {
   return (
     <NotificationProvider>
-      <LanguageProvider>
-        <AuthProvider>
-          <CartProvider>
-            <Router>
-              <AppContent />
-            </Router>
-          </CartProvider>
-        </AuthProvider>
-      </LanguageProvider>
+      <WebSocketProvider>
+        <LanguageProvider>
+          <AuthProvider>
+            <CartProvider>
+              <Router>
+                <AppContent />
+              </Router>
+            </CartProvider>
+          </AuthProvider>
+        </LanguageProvider>
+      </WebSocketProvider>
     </NotificationProvider>
   );
 }

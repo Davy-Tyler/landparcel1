@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useEffect } from 'react';
 import { Location } from '../../types';
 
 interface SearchFiltersProps {
@@ -24,6 +25,26 @@ export interface FilterOptions {
 
 const SearchFilters: React.FC<SearchFiltersProps> = ({ onFilterChange, locations = [] }) => {
   const [filters, setFilters] = useState<FilterOptions>({});
+  const [availableLocations, setAvailableLocations] = useState<Location[]>([]);
+
+  useEffect(() => {
+    // Fetch locations when component mounts
+    const fetchLocations = async () => {
+      try {
+        const { apiService } = await import('../../services/api');
+        const data = await apiService.getLocations();
+        setAvailableLocations(data);
+      } catch (error) {
+        console.error('Error fetching locations:', error);
+      }
+    };
+    
+    if (locations.length === 0) {
+      fetchLocations();
+    } else {
+      setAvailableLocations(locations);
+    }
+  }, [locations]);
 
   const handleFilterChange = (key: keyof FilterOptions, value: string | number | undefined) => {
     const newFilters = { ...filters, [key]: value };
@@ -131,8 +152,8 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({ onFilterChange, locations
             onChange={(e) => handleFilterChange('region', e.target.value || undefined)}
           >
             <option value="">All Regions</option>
-            {Array.from(new Set(locations.map(l => l.hierarchy.region))).map(region => (
-              <option key={region} value={region}>{region}</option>
+            {Array.from(new Set(availableLocations.map(l => l.hierarchy?.region).filter(Boolean))).map((region, index) => (
+              <option key={index} value={region}>{region}</option>
             ))}
           </select>
         </div>
@@ -149,11 +170,11 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({ onFilterChange, locations
           >
             <option value="">All Districts</option>
             {Array.from(new Set(
-              locations
-                .filter(l => !filters.region || l.hierarchy.region === filters.region)
-                .flatMap(l => Object.keys(l.hierarchy.districts))
-            )).map(district => (
-              <option key={district} value={district}>{district}</option>
+              availableLocations
+                .filter(l => !filters.region || l.hierarchy?.region === filters.region)
+                .flatMap(l => Object.keys(l.hierarchy?.districts || {}))
+            )).map((district, index) => (
+              <option key={index} value={district}>{district}</option>
             ))}
           </select>
         </div>
@@ -170,18 +191,18 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({ onFilterChange, locations
           >
             <option value="">All Councils</option>
             {Array.from(new Set(
-              locations
+              availableLocations
                 .filter(l => 
-                  (!filters.region || l.hierarchy.region === filters.region) &&
-                  (!filters.district || Object.keys(l.hierarchy.districts).includes(filters.district))
+                  (!filters.region || l.hierarchy?.region === filters.region) &&
+                  (!filters.district || Object.keys(l.hierarchy?.districts || {}).includes(filters.district))
                 )
                 .flatMap(l => 
-                  Object.entries(l.hierarchy.districts)
+                  Object.entries(l.hierarchy?.districts || {})
                     .filter(([district]) => !filters.district || district === filters.district)
-                    .flatMap(([, data]) => data.councils)
+                    .flatMap(([, data]) => data?.councils || [])
                 )
-            )).map(council => (
-              <option key={council} value={council}>{council}</option>
+            )).map((council, index) => (
+              <option key={index} value={council}>{council}</option>
             ))}
           </select>
         </div>
