@@ -7,6 +7,7 @@ import { Trash2, ShoppingCart } from 'lucide-react';
 import { formatCurrency } from '../utils/formatters';
 import { apiService } from '../services/api';
 import { useNotifications } from '../components/Notifications/NotificationService';
+import { Link } from 'react-router-dom';
 
 export const Cart: React.FC = () => {
   const { items, removeFromCart, clearCart, totalPrice } = useCart();
@@ -64,12 +65,12 @@ export const Cart: React.FC = () => {
             <ShoppingCart className="w-16 h-16 text-gray-400 mx-auto mb-4" />
             <h1 className="text-2xl font-bold text-gray-900 mb-2">{t('cart.empty')}</h1>
             <p className="text-gray-600 mb-6">{t('cart.empty_subtitle')}</p>
-            <a
-              href="/"
+            <Link
+              to="/"
               className="bg-blue-600 text-white px-6 py-3 rounded-md hover:bg-blue-700 transition-colors"
             >
               {t('nav.browse_plots')}
-            </a>
+            </Link>
           </div>
         </div>
       </Layout>

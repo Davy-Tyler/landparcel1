@@ -50,14 +50,14 @@ export const Header: React.FC = () => {
               to="/" 
               className="relative text-base font-medium text-gray-700 hover:text-blue-600 transition-colors duration-300 group"
             >
-              {t('home')}
+              {t('Home')}
               <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-blue-600 transition-all duration-300 group-hover:w-full"></span>
             </Link>
             <Link 
               to="/plots" 
               className="relative text-base font-medium text-gray-700 hover:text-blue-600 transition-colors duration-300 group"
             >
-              {t('nav.browse_plots')}
+              {t('Plots')}
               <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-blue-600 transition-all duration-300 group-hover:w-full"></span>
             </Link>
             {user && (user.role === 'admin' || user.role === 'master_admin') && (
@@ -65,7 +65,7 @@ export const Header: React.FC = () => {
                 to="/admin" 
                 className="relative text-base font-medium text-gray-700 hover:text-blue-600 transition-colors duration-300 group"
               >
-                {t('nav.admin')}
+                {t('Admin')}
                 <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-blue-600 transition-all duration-300 group-hover:w-full"></span>
               </Link>
             )}
