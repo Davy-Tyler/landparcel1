@@ -22,7 +22,7 @@ const AppContent: React.FC = () => {
     <Routes>
       <Route path="/" element={<Landing />} />
       <Route path="/home" element={<Home />} />
-      <Route path="/map" element={<MapView />} />
+      <Route path="/plots" element={<MapView />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/dashboard" element={<Dashboard />} />
@@ -35,17 +35,15 @@ const AppContent: React.FC = () => {
 function App() {
   return (
     <NotificationProvider>
-      <WebSocketProvider>
-        <LanguageProvider>
-          <AuthProvider>
-            <CartProvider>
-              <Router>
-                <AppContent />
-              </Router>
-            </CartProvider>
-          </AuthProvider>
-        </LanguageProvider>
-      </WebSocketProvider>
+      <LanguageProvider>
+        <AuthProvider>
+          <CartProvider>
+            <Router>
+              <AppContent />
+            </Router>
+          </CartProvider>
+        </AuthProvider>
+      </LanguageProvider>
     </NotificationProvider>
   );
 }

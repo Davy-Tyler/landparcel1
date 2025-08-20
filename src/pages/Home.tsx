@@ -116,12 +116,14 @@ export const Home: React.FC = () => {
                 onViewDetails={handleViewDetails}
               />
             ) : (
-              <AdvancedMapView
-                plots={plots}
-                onPlotClick={handlePlotClick}
-                enableDrawing={true}
-                enableSearch={true}
-              />
+              <div className="h-96 rounded-lg border border-gray-200 overflow-hidden relative z-10">
+                <AdvancedMapView
+                  plots={plots}
+                  onPlotClick={handlePlotClick}
+                  enableDrawing={false}
+                  enableSearch={false}
+                />
+              </div>
             )}
           </div>
         </div>

@@ -1,20 +1,19 @@
 export const formatCurrency = (amount: number): string => {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
+  // Use a simpler format for TSH that works better
+  return `TSH ${new Intl.NumberFormat('en-US', {
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
-  }).format(amount).replace('$', 'TSH ');
+  }).format(amount)}`;
 };
 
-export const formatDate = (date: string): string => {
-  return new Date(date).toLocaleDateString('en-US', {
+export const formatNumber = (num: number): string => {
+  return new Intl.NumberFormat('en-US').format(num);
+};
+
+export const formatDate = (date: string | Date): string => {
+  return new Intl.DateTimeFormat('en-US', {
     year: 'numeric',
-    month: 'long',
+    month: 'short',
     day: 'numeric',
-  });
-};
-
-export const formatArea = (area: number): string => {
-  return `${area.toLocaleString()} sqm`;
+  }).format(new Date(date));
 };

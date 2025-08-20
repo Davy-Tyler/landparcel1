@@ -23,25 +23,32 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   useEffect(() => {
     let mounted = true;
 
-    // Check if user is already logged in by checking for token and validating it
     const checkUser = async () => {
       try {
+        // Check for backend token first
         const token = localStorage.getItem('access_token');
-        if (!token) {
-          if (mounted) {
+        if (token) {
+          const userData = await apiService.getCurrentUser();
+          if (mounted && userData) {
+            setUser(userData);
             setLoading(false);
+            return;
           }
-          return;
         }
-        
-        const userData = await apiService.getCurrentUser();
-        if (mounted && userData) {
-          setUser(userData);
+
+        // Check for Supabase session
+        const supabaseSession = localStorage.getItem('supabase_session');
+        if (supabaseSession) {
+          const userData = await apiService.getCurrentUser();
+          if (mounted && userData) {
+            setUser(userData);
+          }
         }
       } catch (error) {
         console.error('Error checking user session:', error);
-        // Clear invalid token
+        // Clear invalid tokens
         localStorage.removeItem('access_token');
+        localStorage.removeItem('supabase_session');
       } finally {
         if (mounted) {
           setLoading(false);
@@ -59,6 +66,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const login = async (email: string, password: string): Promise<boolean> => {
     setLoading(true);
     try {
+      console.log('Attempting login for:', email);
+      console.log('API URL:', import.meta.env.VITE_API_URL);
+      
       const loginResult = await apiService.login(email, password);
       const userData = loginResult.user;
       if (userData) {
@@ -68,9 +78,28 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
       return false;
     } catch (error: any) {
-      console.error('Login error:', error);
-      // Re-throw the error so the UI can display the specific message
-      throw error;
+      console.error('Login error details:', error);
+      
+      // If backend is not available, show clear message
+      if (error?.name === 'TypeError' && error?.message?.includes('fetch')) {
+        throw new Error('Backend server is not running. Please install backend dependencies and start the server.');
+      }
+      
+      // Enhanced error handling
+      let message = 'Login failed. Please try again.';
+      if (!navigator.onLine) {
+        message = 'You appear to be offline. Please check your internet connection.';
+      } else if (error?.response?.status === 401) {
+        message = 'Invalid email or password.';
+      } else if (error?.response?.status === 400) {
+        message = 'Please check your email and password.';
+      } else if (error?.response?.status === 500) {
+        message = 'Server error. Please try again later.';
+      } else if (error?.message) {
+        message = error.message;
+      }
+      
+      throw new Error(message);
     } finally {
       setLoading(false);
     }
@@ -89,6 +118,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         throw new Error('Password must be at least 6 characters long.');
       }
 
+      console.log('Attempting registration for:', userData.email);
+
       const registerResult = await apiService.register(userData);
       const user = registerResult.user;
       
@@ -97,12 +128,30 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setUser(user);
         return true;
       }
-      
       return false;
+      
     } catch (error: any) {
-      console.error('Registration error:', error);
-      // Re-throw the error so the UI can display the specific message
-      throw error;
+      console.error('Registration error details:', error);
+      
+      // If backend is not available, show clear message
+      if (error?.name === 'TypeError' && error?.message?.includes('fetch')) {
+        throw new Error('Backend server is not running. Please install dependencies: pip install fastapi uvicorn supabase');
+      }
+      
+      let message = 'Registration failed. Please try again.';
+      if (!navigator.onLine) {
+        message = 'You appear to be offline. Please check your internet connection.';
+      } else if (error?.response?.status === 409) {
+        message = 'An account with this email already exists.';
+      } else if (error?.response?.status === 400) {
+        message = 'Please check your information and try again.';
+      } else if (error?.response?.status === 500) {
+        message = 'Server error. Please try again later.';
+      } else if (error?.message) {
+        message = error.message;
+      }
+      
+      throw new Error(message);
     } finally {
       setLoading(false);
     }

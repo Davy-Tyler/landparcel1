@@ -1,7 +1,15 @@
 // Simple API utility for FastAPI backend communication
 import { Plot, User, Order, Location } from '../types';
+import { createClient } from '@supabase/supabase-js';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+const USE_DIRECT_SUPABASE = import.meta.env.VITE_USE_DIRECT_SUPABASE_AUTH === 'true';
+
+// Initialize Supabase client for fallback
+const supabase = createClient(
+  import.meta.env.VITE_SUPABASE_URL,
+  import.meta.env.VITE_SUPABASE_ANON_KEY
+);
 
 // Enhanced error handling
 class ApiError extends Error {
@@ -50,67 +58,180 @@ const apiRequest = async (endpoint: string, options: RequestInit = {}) => {
 export const apiService = {
   // Auth endpoints
   async login(email: string, password: string) {
-    const formData = new FormData();
-    formData.append('username', email);
-    formData.append('password', password);
+    // Try backend first, fallback to Supabase
+    try {
+      if (!USE_DIRECT_SUPABASE) {
+        const formData = new FormData();
+        formData.append('username', email);
+        formData.append('password', password);
 
-    const response = await fetch(`${API_BASE_URL}/auth/login`, {
-      method: 'POST',
-      body: formData,
-    });
+        const response = await fetch(`${API_BASE_URL}/auth/login`, {
+          method: 'POST',
+          body: formData,
+        });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ detail: 'Login failed' }));
-      if (response.status === 401) {
-        throw new Error('Invalid email or password. Please check your credentials and try again.');
+        if (!response.ok) {
+          throw new Error('Backend login failed');
+        }
+
+        const data = await response.json();
+        localStorage.setItem('access_token', data.access_token);
+        
+        const user = await this.getCurrentUser();
+        return {
+          user,
+          session: { access_token: data.access_token }
+        };
       }
-      throw new Error(errorData.detail || 'Login failed');
+    } catch (error) {
+      console.log('Backend login failed, trying Supabase:', error);
     }
 
-    const data = await response.json();
-    localStorage.setItem('access_token', data.access_token);
-    
-    // Get user data after login
-    const user = await this.getCurrentUser();
-    return {
-      user,
-      session: { access_token: data.access_token }
-    };
+    // Fallback to Supabase
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    });
+
+    if (error) {
+      if (error.message === 'Invalid login credentials') {
+        throw new Error('Invalid email or password. Please check your credentials and try again.');
+      }
+      throw new Error(error.message);
+    }
+
+    if (data.user) {
+      // Store Supabase session
+      localStorage.setItem('supabase_session', JSON.stringify(data.session));
+      
+      const user: User = {
+        id: data.user.id,
+        email: data.user.email!,
+        first_name: data.user.user_metadata?.first_name || '',
+        last_name: data.user.user_metadata?.last_name || '',
+        phone_number: data.user.user_metadata?.phone_number || '',
+        role: data.user.user_metadata?.role || 'user',
+        is_active: true,
+        created_at: data.user.created_at!
+      };
+
+      return { user, session: data.session };
+    }
+
+    throw new Error('Login failed');
   },
 
   async register(userData: any) {
-    const user = await apiRequest('/auth/register', {
-      method: 'POST',
-      body: JSON.stringify(userData),
+    // Try backend first, fallback to Supabase
+    try {
+      if (!USE_DIRECT_SUPABASE) {
+        const user = await apiRequest('/auth/register', {
+          method: 'POST',
+          body: JSON.stringify(userData),
+        });
+
+        // Auto-login after successful registration
+        const loginData = await this.login(userData.email, userData.password);
+        return {
+          user: loginData.user,
+          session: loginData.session
+        };
+      }
+    } catch (error) {
+      console.log('Backend registration failed, trying Supabase:', error);
+    }
+
+    // Fallback to Supabase
+    const { data, error } = await supabase.auth.signUp({
+      email: userData.email,
+      password: userData.password,
+      options: {
+        data: {
+          first_name: userData.first_name,
+          last_name: userData.last_name,
+          phone_number: userData.phone_number,
+          role: 'user'
+        }
+      }
     });
 
-    // Auto-login after successful registration
-    try {
-      const loginData = await this.login(userData.email, userData.password);
-      return {
-        user: loginData.user,
-        session: loginData.session
-      };
-    } catch (loginError) {
-      return { user, session: null };
+    if (error) {
+      if (error.message.includes('already registered')) {
+        throw new Error('An account with this email already exists.');
+      }
+      throw new Error(error.message);
     }
+
+    if (data.user) {
+      const user: User = {
+        id: data.user.id,
+        email: data.user.email!,
+        first_name: userData.first_name,
+        last_name: userData.last_name,
+        phone_number: userData.phone_number,
+        role: 'user',
+        is_active: true,
+        created_at: data.user.created_at!
+      };
+
+      // Store session if confirmed
+      if (data.session) {
+        localStorage.setItem('supabase_session', JSON.stringify(data.session));
+      }
+
+      return { user, session: data.session };
+    }
+
+    throw new Error('Registration failed');
   },
 
   async getCurrentUser(): Promise<User> {
-    return apiRequest('/users/me');
+    // Try backend first
+    try {
+      if (!USE_DIRECT_SUPABASE) {
+        return await apiRequest('/users/me');
+      }
+    } catch (error) {
+      console.log('Backend getCurrentUser failed, trying Supabase:', error);
+    }
+
+    // Fallback to Supabase
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (user) {
+      return {
+        id: user.id,
+        email: user.email!,
+        first_name: user.user_metadata?.first_name || '',
+        last_name: user.user_metadata?.last_name || '',
+        phone_number: user.user_metadata?.phone_number || '',
+        role: user.user_metadata?.role || 'user',
+        is_active: true,
+        created_at: user.created_at!
+      };
+    }
+
+    throw new Error('No user found');
   },
 
   // Plot endpoints
   async getPlots(params?: any): Promise<Plot[]> {
-    const searchParams = new URLSearchParams();
-    if (params) {
-      Object.keys(params).forEach(key => {
-        if (params[key] !== null && params[key] !== undefined && params[key] !== '') {
-          searchParams.append(key, params[key].toString());
-        }
-      });
+    try {
+      const searchParams = new URLSearchParams();
+      if (params) {
+        Object.keys(params).forEach(key => {
+          if (params[key] !== null && params[key] !== undefined && params[key] !== '') {
+            searchParams.append(key, params[key].toString());
+          }
+        });
+      }
+      return await apiRequest(`/plots?${searchParams}`);
+    } catch (error) {
+      // Fallback to sample data if backend is not available
+      console.log('Backend not available, using sample data');
+      const { samplePlots } = await import('../data/samplePlots');
+      return samplePlots;
     }
-    return apiRequest(`/plots?${searchParams}`);
   },
 
   async getPlot(id: string): Promise<Plot> {
@@ -129,6 +250,42 @@ export const apiService = {
       method: 'PUT',
       body: JSON.stringify(plotData),
     });
+  },
+
+  async getPlotsByRegion(region: string): Promise<Plot[]> {
+    try {
+      return await apiRequest(`/plots?region=${encodeURIComponent(region)}`);
+    } catch (error) {
+      console.log('Backend not available, filtering sample data');
+      const { samplePlots } = await import('../data/samplePlots');
+      return samplePlots.filter(plot => 
+        plot.location.region.toLowerCase() === region.toLowerCase()
+      );
+    }
+  },
+
+  async createPlotBatch(plots: Partial<Plot>[]): Promise<Plot[]> {
+    return apiRequest('/plots/batch', {
+      method: 'POST',
+      body: JSON.stringify({ plots }),
+    });
+  },
+
+  async uploadPlotImages(plotId: string, formData: FormData): Promise<{ urls: string[] }> {
+    const token = localStorage.getItem('access_token');
+    const response = await fetch(`${API_BASE_URL}/plots/${plotId}/images`, {
+      method: 'POST',
+      headers: {
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      throw new Error('Image upload failed');
+    }
+
+    return response.json();
   },
 
   // Order endpoints
@@ -245,5 +402,7 @@ export const apiService = {
 
   logout() {
     localStorage.removeItem('access_token');
+    localStorage.removeItem('supabase_session');
+    supabase.auth.signOut();
   }
 };
