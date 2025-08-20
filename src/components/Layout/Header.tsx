@@ -294,6 +294,3 @@ export const Header: React.FC = () => {
     </header>
   );
 };
-=======
-{"code":"rate-limited","message":"You have hit the rate limit. Please upgrade to keep chatting.","providerLimitHit":false,"isRetryable":true}
->>>>>>> 05a70ff98f67eff34f60cc1b245828495f21864d
